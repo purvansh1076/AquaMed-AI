@@ -1,0 +1,1 @@
+"""AquaMediAI — Alembic versions package."""

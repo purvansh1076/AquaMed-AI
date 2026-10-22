@@ -1,0 +1,4 @@
+# AquaMediAI — data/models/.gitkeep
+# This directory holds trained .joblib model artefacts and evaluation metrics.
+# Model artifacts (encoders.joblib, xgb_model.joblib, rf_model.joblib, evaluation_results.json)
+# are tracked in version control (~16MB total) for immediate zero-config startup.

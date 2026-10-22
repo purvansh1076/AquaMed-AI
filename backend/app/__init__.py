@@ -1,0 +1,1 @@
+"""AquaMediAI — App package."""

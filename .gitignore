@@ -1,0 +1,100 @@
+# ─── Python & Virtual Environments ───────────────────────────────────────────
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+*.whl
+*.pyd
+.Python
+pip-wheel-metadata/
+
+.venv/
+**/.venv/
+venv/
+**/venv/
+env/
+ENV/
+
+# Testing & Type Checking
+.pytest_cache/
+**/.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.dmypy.json
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# ─── Secrets & Environment ────────────────────────────────────────────────────
+.env
+**/.env
+*.env
+**/*.env
+*.env.local
+**/*.env.local
+!.env.example
+!**/.env.example
+
+# ─── Node / Frontend ──────────────────────────────────────────────────────────
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+build/
+frontend/.vite/
+*.log
+**/*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ─── Test Output Dumps & Scratch Logs ─────────────────────────────────────────
+# Scratch test output files (never commit terminal dumps)
+*_output.txt
+**/*_output.txt
+*_result.txt
+**/*_result.txt
+full_test.txt
+final_summary.txt
+lp_out.txt
+neg_output.txt
+neg_conf_out.txt
+test_fail.txt
+
+# Preserve dependency manifests
+!requirements.txt
+!**/requirements.txt
+
+# ─── Data Directory ───────────────────────────────────────────────────────────
+# Raw dataset CSV dumps (generated algorithmically; git-ignore raw scratch dumps)
+backend/data/raw/*.csv
+# Note: Trained model artifacts (encoders.joblib, xgb_model.joblib,
+# rf_model.joblib, evaluation_results.json) are tracked (~16MB total, well
+# within GitHub's 100MB limit).
+
+# ─── Docker ───────────────────────────────────────────────────────────────────
+docker-compose.override.yml
+
+# ─── Editors & OS Artifacts ───────────────────────────────────────────────────
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ─── Temporary / Backup Files ─────────────────────────────────────────────────
+*.bak
+*.swp
+*.sw?
+*.tmp

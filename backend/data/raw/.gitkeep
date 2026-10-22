@@ -1,0 +1,3 @@
+# AquaMediAI — data/raw/.gitkeep
+# This directory holds synthetically generated CSV files.
+# The CSVs themselves are git-ignored; this file ensures the directory is tracked.

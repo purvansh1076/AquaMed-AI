@@ -1,0 +1,43 @@
+"""AquaMediAI — Pydantic schemas package (Phase 8)."""
+
+from app.schemas.api_models import (
+    AllocationRequest,
+    AllocationResponse,
+    ConflictRequest,
+    ErrorResponse,
+    FarmerAllocationResponse,
+    FarmerInputData,
+    FarmerResponseModel,
+    HealthResponse,
+    NegotiationRequest,
+    NegotiationResponse,
+    PredictionBatchRequest,
+    PredictionBatchResponse,
+    PredictionRequest,
+    PredictionResponse,
+    ScenarioConflictReportResponse,
+    ScenarioRunRequest,
+    ScenarioRunResponse,
+    ScenarioType,
+)
+
+__all__ = [
+    "AllocationRequest",
+    "AllocationResponse",
+    "ConflictRequest",
+    "ErrorResponse",
+    "FarmerAllocationResponse",
+    "FarmerInputData",
+    "FarmerResponseModel",
+    "HealthResponse",
+    "NegotiationRequest",
+    "NegotiationResponse",
+    "PredictionBatchRequest",
+    "PredictionBatchResponse",
+    "PredictionRequest",
+    "PredictionResponse",
+    "ScenarioConflictReportResponse",
+    "ScenarioRunRequest",
+    "ScenarioRunResponse",
+    "ScenarioType",
+]

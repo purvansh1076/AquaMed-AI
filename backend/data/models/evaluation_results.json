@@ -1,0 +1,152 @@
+{
+  "best_model": "RandomForest",
+  "model_version": "1.0.0",
+  "RandomForest": {
+    "model_name": "RandomForest",
+    "model_version": "1.0.0",
+    "training_time_seconds": 0.4259,
+    "n_features": 22,
+    "feature_columns": [
+      "farm_area_hectares",
+      "et0_mm_per_day",
+      "kc_value",
+      "etc_mm_per_day",
+      "soil_whc_mm_per_m",
+      "preferred_start_hour",
+      "irrigation_window_hours",
+      "flexibility_score",
+      "urgency_score",
+      "crop_stress_index",
+      "temperature_celsius",
+      "humidity_percent",
+      "rainfall_mm",
+      "crop_type_encoded",
+      "soil_type_encoded",
+      "growth_stage_encoded",
+      "season_encoded",
+      "area_x_etc",
+      "urgency_x_stress",
+      "et0_x_kc",
+      "rain_deficit",
+      "flexibility_window"
+    ],
+    "model_file": "rf_model.joblib",
+    "train_metrics": {
+      "mae": 7.162407790526727,
+      "rmse": 11.52077965180191,
+      "r2": 0.9951488369471692,
+      "n_samples": 2099,
+      "split": "train"
+    },
+    "val_metrics": {
+      "mae": 17.79444868444234,
+      "rmse": 27.438677700588244,
+      "r2": 0.9742096007580902,
+      "n_samples": 450,
+      "split": "val"
+    },
+    "test_metrics": {
+      "mae": 17.486476381373198,
+      "rmse": 27.376145206369277,
+      "r2": 0.9737058115710668,
+      "n_samples": 451,
+      "split": "test"
+    }
+  },
+  "XGBoost": {
+    "model_name": "XGBoost",
+    "model_version": "1.0.0",
+    "training_time_seconds": 0.4161,
+    "n_features": 22,
+    "feature_columns": [
+      "farm_area_hectares",
+      "et0_mm_per_day",
+      "kc_value",
+      "etc_mm_per_day",
+      "soil_whc_mm_per_m",
+      "preferred_start_hour",
+      "irrigation_window_hours",
+      "flexibility_score",
+      "urgency_score",
+      "crop_stress_index",
+      "temperature_celsius",
+      "humidity_percent",
+      "rainfall_mm",
+      "crop_type_encoded",
+      "soil_type_encoded",
+      "growth_stage_encoded",
+      "season_encoded",
+      "area_x_etc",
+      "urgency_x_stress",
+      "et0_x_kc",
+      "rain_deficit",
+      "flexibility_window"
+    ],
+    "model_file": "xgb_model.joblib",
+    "train_metrics": {
+      "mae": 8.100536854831645,
+      "rmse": 11.2620676532852,
+      "r2": 0.995364267205202,
+      "n_samples": 2099,
+      "split": "train"
+    },
+    "val_metrics": {
+      "mae": 18.81713057929145,
+      "rmse": 29.57775935909683,
+      "r2": 0.9700316901146463,
+      "n_samples": 450,
+      "split": "val"
+    },
+    "test_metrics": {
+      "mae": 18.63126924958832,
+      "rmse": 29.266090053634084,
+      "r2": 0.9699499922347739,
+      "n_samples": 451,
+      "split": "test"
+    }
+  },
+  "dataset": {
+    "n_total": 3000,
+    "n_train": 2099,
+    "n_val": 450,
+    "n_test": 451,
+    "n_features": 22,
+    "feature_columns": [
+      "farm_area_hectares",
+      "et0_mm_per_day",
+      "kc_value",
+      "etc_mm_per_day",
+      "soil_whc_mm_per_m",
+      "preferred_start_hour",
+      "irrigation_window_hours",
+      "flexibility_score",
+      "urgency_score",
+      "crop_stress_index",
+      "temperature_celsius",
+      "humidity_percent",
+      "rainfall_mm",
+      "crop_type_encoded",
+      "soil_type_encoded",
+      "growth_stage_encoded",
+      "season_encoded",
+      "area_x_etc",
+      "urgency_x_stress",
+      "et0_x_kc",
+      "rain_deficit",
+      "flexibility_window"
+    ],
+    "target_column": "water_demand_m3",
+    "seed": 42,
+    "scenario_distribution": {
+      "canal_reduction": 375,
+      "sudden_rainfall": 375,
+      "normal_water": 375,
+      "high_urgency_farmer": 375,
+      "severe_shortage": 375,
+      "simultaneous_demand": 375,
+      "moderate_shortage": 375,
+      "flexible_farmer": 375
+    },
+    "data_disclaimer": "SYNTHETIC DATA \u2014 All records generated algorithmically using the FAO-56 ET\u2080 \u00d7 Kc \u00d7 area method. No real farmer data."
+  }
+}
