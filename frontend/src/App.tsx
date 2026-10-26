@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { ViewModeProvider } from './context/ViewModeContext';
 import { MainLayout } from './layouts/MainLayout';
 import { FarmerViewPage } from './pages/FarmerViewPage';
+import { FarmerPortalPage } from './pages/FarmerPortalPage';
 import { OverviewPage } from './pages/OverviewPage';
 import { ScenarioPage } from './pages/ScenarioPage';
 import { PredictionsPage } from './pages/PredictionsPage';
@@ -20,6 +21,8 @@ export const App: React.FC = () => {
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Navigate to="/overview" replace />} />
           <Route path="farmer" element={<FarmerViewPage />} />
+          <Route path="farmer/portal" element={<FarmerPortalPage />} />
+          <Route path="farmer-portal" element={<FarmerPortalPage />} />
           <Route path="overview" element={<OverviewPage />} />
           <Route path="scenario" element={<ScenarioPage />} />
           <Route path="predictions" element={<PredictionsPage />} />

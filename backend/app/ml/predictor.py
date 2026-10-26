@@ -99,6 +99,10 @@ class PredictionResult:
     feature_values: Dict[str, float] = field(default_factory=dict)
     input_summary: Dict[str, Any] = field(default_factory=dict)
     warning: Optional[str] = None
+    shadow_agronomic_estimate_m3: Optional[float] = None
+    shadow_comparison: Optional[Dict[str, Any]] = None
+    shadow_candidate_v3_estimate_m3: Optional[float] = None
+    shadow_candidate_v3_comparison: Optional[Dict[str, Any]] = None
 
     def as_dict(self) -> Dict[str, Any]:
         return {
@@ -107,6 +111,10 @@ class PredictionResult:
             "model_version": self.model_version,
             "input_summary": self.input_summary,
             "warning": self.warning,
+            "shadow_agronomic_estimate_m3": self.shadow_agronomic_estimate_m3,
+            "shadow_comparison": self.shadow_comparison,
+            "shadow_candidate_v3_estimate_m3": self.shadow_candidate_v3_estimate_m3,
+            "shadow_candidate_v3_comparison": self.shadow_candidate_v3_comparison,
         }
 
 
@@ -136,7 +144,18 @@ class WaterDemandPredictor:
         self._model = model
         self._encoders = encoders
         self._model_name = model_name
+        self._candidate_v3_adapter = None
         logger.info("WaterDemandPredictor initialised (model=%s)", model_name)
+
+    def _get_candidate_v3_adapter(self):
+        if self._candidate_v3_adapter is None:
+            try:
+                from app.ml.candidate_v3_shadow_adapter import CandidateV3ShadowAdapter
+                self._candidate_v3_adapter = CandidateV3ShadowAdapter()
+            except Exception as exc:
+                logger.warning("Could not initialize CandidateV3ShadowAdapter: %s", exc)
+                self._candidate_v3_adapter = None
+        return self._candidate_v3_adapter
 
     # ─── Factory constructor ───────────────────────────────────────────────────
 
@@ -160,8 +179,15 @@ class WaterDemandPredictor:
         -------
         WaterDemandPredictor
         """
-        model, encoders, eval_results = validate_and_load_artifacts(model_dir)
-        # Optional: could log best_model from eval_results here
+        model, encoders, eval_results = validate_and_load_artifacts(
+            model_dir, model_name=model_name
+        )
+        # Log which artifact was loaded for debugging
+        logger.info(
+            "WaterDemandPredictor loaded: model_name=%s from %s",
+            model_name,
+            model_dir,
+        )
         return cls(model=model, encoders=encoders, model_name=model_name)
 
     # ─── Single-row prediction ─────────────────────────────────────────────────
@@ -169,6 +195,8 @@ class WaterDemandPredictor:
     def predict_single(
         self,
         farmer_data: Dict[str, Any],
+        enable_shadow_mode: Optional[bool] = None,
+        enable_candidate_v3_shadow: Optional[bool] = None,
     ) -> PredictionResult:
         """
         Predict water demand for a single farmer/farm row.
@@ -178,6 +206,12 @@ class WaterDemandPredictor:
         farmer_data : dict
             Dictionary with raw input fields (see REQUIRED_INPUT_COLS).
             Missing optional fields are filled with sensible defaults.
+        enable_shadow_mode : bool, optional
+            Whether to calculate deterministic agronomic baseline in shadow mode.
+            Defaults to app config `enable_shadow_mode`.
+        enable_candidate_v3_shadow : bool, optional
+            Whether to evaluate Candidate v3 in shadow mode.
+            Defaults to app config `enable_candidate_v3_shadow`.
 
         Returns
         -------
@@ -196,17 +230,67 @@ class WaterDemandPredictor:
             warning = f"{warning}; {clamp_msg}" if warning else clamp_msg
             pred_val = 5.0
 
+        # Determine shadow mode execution
+        if enable_shadow_mode is None:
+            try:
+                from app.config import get_settings
+                enable_shadow_mode = get_settings().enable_shadow_mode
+            except Exception:
+                enable_shadow_mode = True
+
+        shadow_val: Optional[float] = None
+        shadow_comp: Optional[Dict[str, Any]] = None
+        if enable_shadow_mode:
+            shadow_val, shadow_comp = self._compute_shadow_baseline(
+                raw_data=farmer_data,
+                legacy_prediction=pred_val,
+            )
+
+        # Determine Candidate v3 shadow mode execution
+        if enable_candidate_v3_shadow is None:
+            try:
+                from app.config import get_settings
+                enable_candidate_v3_shadow = get_settings().enable_candidate_v3_shadow
+            except Exception:
+                enable_candidate_v3_shadow = False
+
+        cand_v3_val: Optional[float] = None
+        cand_v3_comp: Optional[Dict[str, Any]] = None
+        if enable_candidate_v3_shadow:
+            try:
+                adapter = self._get_candidate_v3_adapter()
+                if adapter is not None:
+                    raw_res = adapter.evaluate_shadow(
+                        farmer_data=farmer_data,
+                    )
+                    cand_v3_comp = raw_res.as_dict() if hasattr(raw_res, "as_dict") else raw_res
+                    cand_v3_val = cand_v3_comp.get("candidate_estimate_m3")
+            except Exception as exc:
+                logger.warning("Non-blocking Candidate v3 shadow error: %s", exc)
+                cand_v3_comp = {
+                    "status": "failed",
+                    "candidate_version": "candidate_v3",
+                    "error_reason": f"Shadow execution failed: {str(exc)}",
+                    "reasons": [f"Shadow execution failed: {str(exc)}"],
+                }
+
         return PredictionResult(
             predicted_water_demand_m3=pred_val,
             model_name=self._model_name,
             feature_values=feat_values,
             input_summary=self._build_input_summary(validated),
             warning=warning,
+            shadow_agronomic_estimate_m3=shadow_val,
+            shadow_comparison=shadow_comp,
+            shadow_candidate_v3_estimate_m3=cand_v3_val,
+            shadow_candidate_v3_comparison=cand_v3_comp,
         )
 
     def predict_batch(
         self,
         farmers: List[Dict[str, Any]],
+        enable_shadow_mode: Optional[bool] = None,
+        enable_candidate_v3_shadow: Optional[bool] = None,
     ) -> List[PredictionResult]:
         """
         Predict water demand for a batch of farmers.
@@ -215,6 +299,10 @@ class WaterDemandPredictor:
         ----------
         farmers : list of dict
             Each dict is a raw farmer input (same schema as predict_single).
+        enable_shadow_mode : bool, optional
+            Whether to calculate deterministic agronomic baseline in shadow mode.
+        enable_candidate_v3_shadow : bool, optional
+            Whether to calculate Candidate v3 in shadow mode.
 
         Returns
         -------
@@ -222,7 +310,13 @@ class WaterDemandPredictor:
         """
         results = []
         for farmer in farmers:
-            results.append(self.predict_single(farmer))
+            results.append(
+                self.predict_single(
+                    farmer,
+                    enable_shadow_mode=enable_shadow_mode,
+                    enable_candidate_v3_shadow=enable_candidate_v3_shadow,
+                )
+            )
         return results
 
     def predict_from_dataframe(
@@ -345,6 +439,138 @@ class WaterDemandPredictor:
             "temperature_celsius": data.get("temperature_celsius"),
             "rainfall_mm": data.get("rainfall_mm"),
         }
+
+    def _compute_shadow_baseline(
+        self,
+        raw_data: Dict[str, Any],
+        legacy_prediction: float,
+        application_efficiency: float = 0.70,
+    ) -> tuple[Optional[float], Dict[str, Any]]:
+        """
+        Compute deterministic agronomic baseline (FAO-56 + USDA-SCS) in shadow mode.
+
+        Validates all required physical inputs strictly without fabricating missing data.
+        Returns:
+            (shadow_agronomic_estimate_m3_or_None, shadow_comparison_dict)
+        """
+        errors: List[str] = []
+
+        # Validate required physical variables from caller input
+        farm_area = raw_data.get("farm_area_hectares")
+        et0 = raw_data.get("et0_mm_per_day")
+        kc = raw_data.get("kc_value")
+        rain = raw_data.get("rainfall_mm")
+
+        if farm_area is None:
+            errors.append("farm_area_hectares is required and missing.")
+        elif not isinstance(farm_area, (int, float)) or farm_area <= 0:
+            errors.append(f"farm_area_hectares must be > 0, got {farm_area}")
+
+        if et0 is None:
+            errors.append("et0_mm_per_day is required and missing.")
+        elif not isinstance(et0, (int, float)) or et0 < 0:
+            errors.append(f"et0_mm_per_day must be >= 0, got {et0}")
+
+        if kc is None:
+            errors.append("kc_value is required and missing.")
+        elif not isinstance(kc, (int, float)) or kc <= 0:
+            errors.append(f"kc_value must be > 0, got {kc}")
+
+        if rain is None:
+            errors.append("rainfall_mm is required and missing.")
+        elif not isinstance(rain, (int, float)) or rain < 0:
+            errors.append(f"rainfall_mm must be >= 0, got {rain}")
+
+        if errors:
+            return None, {
+                "status": "unavailable",
+                "agronomic_demand_m3": None,
+                "legacy_prediction_m3": round(legacy_prediction, 2),
+                "difference_m3": None,
+                "difference_percent": None,
+                "method": "FAO-56 Single Crop Coefficient + USDA SCS Effective Rainfall",
+                "application_efficiency": application_efficiency,
+                "is_empirical_error": False,
+                "input_validation": {
+                    "is_valid": False,
+                    "errors": errors,
+                },
+                "provenance_note": (
+                    "Legacy ML models (RandomForest, XGBoost) were trained on synthetic data. "
+                    "The agronomic estimate is a deterministic physical calculation, NOT measured delivery."
+                ),
+                "disclaimer": (
+                    "Differences between legacy predictions and deterministic baseline are comparison metrics, "
+                    "NOT empirical model error, because no measured real-world delivery ground truth is available."
+                ),
+            }
+
+        try:
+            from app.ml.agronomic_baseline import DeterministicAgronomicBaseline
+
+            baseline_engine = DeterministicAgronomicBaseline(
+                default_application_efficiency=application_efficiency
+            )
+            res = baseline_engine.calculate_daily_demand(
+                farm_area_hectares=float(farm_area),
+                et0_mm_per_day=float(et0),
+                kc_value=float(kc),
+                rainfall_mm=float(rain),
+                application_efficiency=application_efficiency,
+            )
+            agronomic_m3 = round(res.volumetric_demand_m3_per_day, 2)
+            diff_m3 = round(legacy_prediction - agronomic_m3, 2)
+            diff_pct = (
+                round((diff_m3 / agronomic_m3) * 100.0, 2)
+                if agronomic_m3 > 0
+                else (0.0 if legacy_prediction == 0 else None)
+            )
+
+            return agronomic_m3, {
+                "status": "available",
+                "agronomic_demand_m3": agronomic_m3,
+                "legacy_prediction_m3": round(legacy_prediction, 2),
+                "difference_m3": diff_m3,
+                "difference_percent": diff_pct,
+                "method": res.method,
+                "application_efficiency": application_efficiency,
+                "is_empirical_error": False,
+                "input_validation": {
+                    "is_valid": True,
+                    "errors": [],
+                },
+                "provenance_note": (
+                    "Legacy ML models (RandomForest, XGBoost) were trained on synthetic data. "
+                    "The agronomic estimate is a deterministic physical calculation, NOT measured delivery."
+                ),
+                "disclaimer": (
+                    "Differences between legacy predictions and deterministic baseline are comparison metrics, "
+                    "NOT empirical model error, because no measured real-world delivery ground truth is available."
+                ),
+            }
+        except Exception as exc:
+            return None, {
+                "status": "unavailable",
+                "agronomic_demand_m3": None,
+                "legacy_prediction_m3": round(legacy_prediction, 2),
+                "difference_m3": None,
+                "difference_percent": None,
+                "method": "FAO-56 Single Crop Coefficient + USDA SCS Effective Rainfall",
+                "application_efficiency": application_efficiency,
+                "is_empirical_error": False,
+                "input_validation": {
+                    "is_valid": False,
+                    "errors": [f"Calculation error: {str(exc)}"],
+                },
+                "provenance_note": (
+                    "Legacy ML models (RandomForest, XGBoost) were trained on synthetic data. "
+                    "The agronomic estimate is a deterministic physical calculation, NOT measured delivery."
+                ),
+                "disclaimer": (
+                    "Differences between legacy predictions and deterministic baseline are comparison metrics, "
+                    "NOT empirical model error, because no measured real-world delivery ground truth is available."
+                ),
+            }
 
     @property
     def model_name(self) -> str:

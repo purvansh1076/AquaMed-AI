@@ -67,6 +67,14 @@ export const FarmerViewPage: React.FC = () => {
           >
             <span>{t('startWaterSharingTitle')}</span>
           </Link>
+          <Link
+            to="/farmer-portal"
+            id="farmer-quick-portal-link"
+            className="btn btn-outline"
+            style={{ borderRadius: '999px', padding: '12px 24px', fontWeight: 600, textDecoration: 'none' }}
+          >
+            <span>🌱 {t('farmerPortalTitle')}</span>
+          </Link>
         </div>
       </div>
     );

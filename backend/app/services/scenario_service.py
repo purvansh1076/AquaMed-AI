@@ -46,7 +46,8 @@ _explainer_cache: Dict[str, Any] = {}
 def _get_predictor(model_name: str = "XGBoost") -> WaterDemandPredictor:
     """Return a cached WaterDemandPredictor, loading from artifacts if needed."""
     if model_name not in _predictor_cache:
-        model_dir = Path("data/models")
+        from app.config import get_settings
+        model_dir = get_settings().model_dir_path
         if not (model_dir / "encoders.joblib").exists():
             raise FileNotFoundError(
                 f"Model artifacts not found in {model_dir}. "
@@ -55,14 +56,15 @@ def _get_predictor(model_name: str = "XGBoost") -> WaterDemandPredictor:
         _predictor_cache[model_name] = WaterDemandPredictor.from_artifacts(
             model_dir, model_name=model_name
         )
-        logger.info("Loaded predictor: %s", model_name)
+        logger.info("Loaded predictor: %s from %s", model_name, model_dir)
     return _predictor_cache[model_name]
 
 
 def _get_explainer(model_name: str = "XGBoost") -> Optional[Any]:
     """Return a cached WaterDemandExplainer, loading from artifacts if needed."""
     if model_name not in _explainer_cache:
-        model_dir = Path("data/models")
+        from app.config import get_settings
+        model_dir = get_settings().model_dir_path
         if not (model_dir / "encoders.joblib").exists():
             return None
         try:
@@ -77,7 +79,7 @@ def _get_explainer(model_name: str = "XGBoost") -> Optional[Any]:
                 model_name=model_name,
                 n_background=50,
             )
-            logger.info("Loaded SHAP explainer: %s", model_name)
+            logger.info("Loaded SHAP explainer: %s from %s", model_name, model_dir)
         except Exception as exc:
             logger.warning("Failed to initialize SHAP explainer for %s: %s", model_name, exc)
             return None
@@ -181,14 +183,27 @@ class ScenarioService:
         # ── Step 2: Build prediction response data ────────────────────────────
         prediction_responses = []
         for pred, agent in zip(predictions, agents):
-            prediction_responses.append({
+            pred_item = {
                 "farmer_id": agent.farmer_id,
                 "predicted_water_demand_m3": round(pred.predicted_water_demand_m3, 2),
                 "model_name": pred.model_name,
                 "model_version": pred.model_version,
                 "warning": pred.warning,
                 "input_summary": pred.input_summary,
-            })
+            }
+            if getattr(pred, "shadow_agronomic_estimate_m3", None) is not None:
+                pred_item["shadow_agronomic_estimate_m3"] = round(pred.shadow_agronomic_estimate_m3, 2)
+            else:
+                pred_item["shadow_agronomic_estimate_m3"] = None
+            pred_item["shadow_comparison"] = getattr(pred, "shadow_comparison", None)
+
+            if getattr(pred, "shadow_candidate_v3_estimate_m3", None) is not None:
+                pred_item["shadow_candidate_v3_estimate_m3"] = round(pred.shadow_candidate_v3_estimate_m3, 2)
+            else:
+                pred_item["shadow_candidate_v3_estimate_m3"] = None
+            pred_item["shadow_candidate_v3_comparison"] = getattr(pred, "shadow_candidate_v3_comparison", None)
+
+            prediction_responses.append(pred_item)
 
         # ── Step 3: Farmer agent data ─────────────────────────────────────────
         farmer_dicts = [a.as_dict() for a in agents]
@@ -285,19 +300,34 @@ class ScenarioService:
         self,
         farmer_data: Dict[str, Any],
         model_name: str = "XGBoost",
+        enable_shadow_mode: Optional[bool] = None,
+        enable_candidate_v3_shadow: Optional[bool] = None,
     ) -> PredictionResult:
         """Run a single ML prediction using the existing predictor."""
         predictor = _get_predictor(model_name)
-        return predictor.predict_single(farmer_data)
+        return predictor.predict_single(
+            farmer_data,
+            enable_shadow_mode=enable_shadow_mode,
+            enable_candidate_v3_shadow=enable_candidate_v3_shadow,
+        )
 
     def predict_batch(
         self,
         farmers_data: List[Dict[str, Any]],
         model_name: str = "XGBoost",
+        enable_shadow_mode: Optional[bool] = None,
+        enable_candidate_v3_shadow: Optional[bool] = None,
     ) -> List[PredictionResult]:
         """Run batch ML predictions using the existing predictor."""
         predictor = _get_predictor(model_name)
-        return [predictor.predict_single(fd) for fd in farmers_data]
+        return [
+            predictor.predict_single(
+                fd,
+                enable_shadow_mode=enable_shadow_mode,
+                enable_candidate_v3_shadow=enable_candidate_v3_shadow,
+            )
+            for fd in farmers_data
+        ]
 
     # ─── Partial pipeline: conflict detection only ────────────────────────────
 

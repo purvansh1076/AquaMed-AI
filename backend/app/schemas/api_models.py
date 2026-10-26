@@ -93,6 +93,9 @@ class FarmerInputData(BaseModel):
     temperature_celsius: float = Field(default=28.0)
     humidity_percent: float = Field(default=60.0, ge=0.0, le=100.0)
     rainfall_mm: float = Field(default=0.0, ge=0.0)
+    rainfall_forecast_mm: Optional[float] = Field(default=None, ge=0.0, description="Forecast rainfall for forward morning scheduling.")
+    rainfall_observed_mm: Optional[float] = Field(default=None, ge=0.0, description="Observed rainfall for historical completed day accounting.")
+    rainfall_input_mode: Optional[str] = Field(default=None, description="Input mode: 'observed_historical', 'forecast_forward', or 'fallback_antecedent'.")
 
 
 class PredictionRequest(BaseModel):
@@ -156,6 +159,10 @@ class PredictionResponse(BaseModel):
     model_version: str
     warning: Optional[str]
     input_summary: Dict[str, Any]
+    shadow_agronomic_estimate_m3: Optional[float] = None
+    shadow_comparison: Optional[Dict[str, Any]] = None
+    shadow_candidate_v3_estimate_m3: Optional[float] = None
+    shadow_candidate_v3_comparison: Optional[Dict[str, Any]] = None
 
 
 class PredictionBatchResponse(BaseModel):

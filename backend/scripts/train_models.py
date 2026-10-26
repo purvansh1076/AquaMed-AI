@@ -74,8 +74,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--model-dir",
         type=str,
-        default="data/models",
-        help="Directory to save model artefacts (default: data/models)",
+        default=None,
+        help="Directory to save model artefacts (default: data/models resolved via config)",
     )
     return parser.parse_args()
 
@@ -107,7 +107,11 @@ def print_model_results(result) -> None:
 
 def main() -> int:
     args = parse_args()
-    model_dir = Path(args.model_dir)
+    if args.model_dir:
+        model_dir = Path(args.model_dir)
+    else:
+        from app.config import get_settings
+        model_dir = get_settings().model_dir_path
 
     print_separator("=")
     print(" AquaMediAI -- ML Training Pipeline")

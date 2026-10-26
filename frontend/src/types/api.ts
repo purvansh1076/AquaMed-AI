@@ -149,6 +149,23 @@ export interface HealthResponse {
   disclaimer: string;
 }
 
+export interface ShadowComparisonDetails {
+  status: 'available' | 'unavailable';
+  agronomic_demand_m3: number | null;
+  legacy_prediction_m3: number;
+  difference_m3: number | null;
+  difference_percent: number | null;
+  method: string;
+  application_efficiency: number;
+  is_empirical_error: boolean;
+  input_validation: {
+    is_valid: boolean;
+    errors: string[];
+  };
+  provenance_note: string;
+  disclaimer: string;
+}
+
 export interface PredictionResponse {
   farmer_id: string | null;
   predicted_water_demand_m3: number;
@@ -156,6 +173,10 @@ export interface PredictionResponse {
   model_version: string;
   warning: string | null;
   input_summary: Record<string, unknown>;
+  shadow_agronomic_estimate_m3?: number | null;
+  shadow_comparison?: ShadowComparisonDetails | Record<string, unknown> | null;
+  shadow_candidate_v3_estimate_m3?: number | null;
+  shadow_candidate_v3_comparison?: Record<string, unknown> | null;
 }
 
 export interface PredictionBatchResponse {

@@ -345,7 +345,11 @@ def run_training_pipeline(
     TrainingArtifacts
         Container with results, trained models, and encoders.
     """
-    model_dir = model_dir or Path("data/models")
+    if model_dir is None:
+        from app.config import get_settings
+        model_dir = get_settings().model_dir_path
+    else:
+        model_dir = Path(model_dir)
     model_dir.mkdir(parents=True, exist_ok=True)
 
     # ── Step 1: Generate synthetic dataset ────────────────────────────────────
@@ -647,16 +651,27 @@ def load_evaluation_results(model_dir: Path) -> Dict[str, Any]:
         return json.load(f)
 
 
-def validate_and_load_artifacts(model_dir: Path) -> Tuple[Any, FittedEncoders, Dict[str, Any]]:
+def validate_and_load_artifacts(
+    model_dir: Path, model_name: str = "XGBoost"
+) -> Tuple[Any, FittedEncoders, Dict[str, Any]]:
     """
     Convenience: validate artifacts exist and are consistent, then load them.
+
+    Parameters
+    ----------
+    model_dir : Path
+        Directory containing model artefacts.
+    model_name : str
+        'XGBoost' (default) or 'RandomForest'. Controls which .joblib file
+        is loaded. Previously this was hardcoded to 'XGBoost'; now it
+        correctly respects the caller's selection.
 
     Returns
     -------
     (model, encoders, eval_results) tuple ready for predictor construction.
     """
     validate_artifacts(model_dir)
-    model = load_model(model_dir, model_name="XGBoost")
+    model = load_model(model_dir, model_name=model_name)
     encoders = load_encoders(model_dir)
     eval_results = load_evaluation_results(model_dir)
     return model, encoders, eval_results

@@ -17,6 +17,9 @@ from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+
+
 class Settings(BaseSettings):
     """
     Central configuration object loaded from environment variables.
@@ -65,6 +68,9 @@ class Settings(BaseSettings):
     random_seed: int = 42
     model_dir: str = "data/models"
     data_dir: str = "data/raw"
+    enable_shadow_mode: bool = True
+    enable_candidate_v3_shadow: bool = False
+    candidate_v3_dir: str = "data/models/candidate_v3"
 
     # ── Logging ────────────────────────────────────────────────────────────────
     log_level: str = "INFO"
@@ -73,12 +79,58 @@ class Settings(BaseSettings):
     @property
     def model_dir_path(self) -> Path:
         """Absolute Path to the model artifact directory."""
-        return Path(self.model_dir)
+        raw_path = Path(self.model_dir)
+        if raw_path.is_absolute():
+            return raw_path.resolve()
+
+        # Check candidate locations:
+        # 1. Relative to CWD (e.g., when executed inside backend/)
+        cwd_candidate = (Path.cwd() / raw_path).resolve()
+        if (cwd_candidate / "encoders.joblib").exists() or (cwd_candidate / "rf_model.joblib").exists():
+            return cwd_candidate
+
+        # 2. Relative to BACKEND_DIR (e.g., when executed from repository root or external directories)
+        backend_candidate = (BACKEND_DIR / raw_path).resolve()
+        if (backend_candidate / "encoders.joblib").exists() or (backend_candidate / "rf_model.joblib").exists():
+            return backend_candidate
+
+        # Fallback to existing directory if present, else backend_candidate
+        if cwd_candidate.exists():
+            return cwd_candidate
+        return backend_candidate
+
+    @property
+    def candidate_v3_dir_path(self) -> Path:
+        """Absolute Path to Candidate v3 artifacts."""
+        raw_path = Path(self.candidate_v3_dir)
+        if raw_path.is_absolute():
+            return raw_path.resolve()
+
+        cwd_candidate = (Path.cwd() / raw_path).resolve()
+        if (cwd_candidate / "two_stage_config.json").exists():
+            return cwd_candidate
+
+        backend_candidate = (BACKEND_DIR / raw_path).resolve()
+        if (backend_candidate / "two_stage_config.json").exists():
+            return backend_candidate
+
+        if cwd_candidate.exists():
+            return cwd_candidate
+        return backend_candidate
 
     @property
     def data_dir_path(self) -> Path:
         """Absolute Path to the raw data directory."""
-        return Path(self.data_dir)
+        raw_path = Path(self.data_dir)
+        if raw_path.is_absolute():
+            return raw_path.resolve()
+
+        cwd_candidate = (Path.cwd() / raw_path).resolve()
+        if cwd_candidate.exists():
+            return cwd_candidate
+
+        backend_candidate = (BACKEND_DIR / raw_path).resolve()
+        return backend_candidate
 
     @field_validator("app_env")
     @classmethod

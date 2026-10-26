@@ -79,6 +79,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -100,18 +101,22 @@ app.include_router(scenario_router, prefix="/api/v1", tags=["Pipeline"])
 def health_check() -> JSONResponse:
     """
     Liveness / readiness probe.
-    Returns system status and database connectivity.
+    Returns system status, pipeline availability, and database connectivity.
+    Does not fail cloud liveness probes when optional database is unconfigured.
     """
+    model_dir = settings.model_dir_path
+    pipeline_ok = (model_dir / "encoders.joblib").exists() or (model_dir / "rf_model.joblib").exists()
     db_ok = check_db_connection()
-    status_code = 200 if db_ok else 503
+    status_code = 200 if pipeline_ok else 503
     return JSONResponse(
         status_code=status_code,
         content={
-            "status": "healthy" if db_ok else "degraded",
+            "status": "healthy" if pipeline_ok else "degraded",
             "service": "AquaMediAI API",
             "version": "1.0.0",
             "environment": settings.app_env,
-            "database": "connected" if db_ok else "unreachable",
+            "pipeline": "available" if pipeline_ok else "degraded",
+            "database": "connected" if db_ok else "not_configured",
             "disclaimer": (
                 "All data is synthetically generated for academic purposes. "
                 "No real farmer data is used."

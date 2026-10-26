@@ -148,6 +148,18 @@ def predict_single(request: PredictionRequest) -> Dict[str, Any]:
             "model_version": result.model_version,
             "warning": result.warning,
             "input_summary": result.input_summary,
+            "shadow_agronomic_estimate_m3": (
+                round(result.shadow_agronomic_estimate_m3, 2)
+                if result.shadow_agronomic_estimate_m3 is not None
+                else None
+            ),
+            "shadow_comparison": result.shadow_comparison,
+            "shadow_candidate_v3_estimate_m3": (
+                round(result.shadow_candidate_v3_estimate_m3, 2)
+                if result.shadow_candidate_v3_estimate_m3 is not None
+                else None
+            ),
+            "shadow_candidate_v3_comparison": result.shadow_candidate_v3_comparison,
         }
     except FileNotFoundError as exc:
         raise HTTPException(status_code=503, detail={"error": "model_missing", "detail": str(exc), "status_code": 503})
@@ -178,6 +190,18 @@ def predict_batch(request: PredictionBatchRequest) -> Dict[str, Any]:
                 "model_version": r.model_version,
                 "warning": r.warning,
                 "input_summary": r.input_summary,
+                "shadow_agronomic_estimate_m3": (
+                    round(r.shadow_agronomic_estimate_m3, 2)
+                    if r.shadow_agronomic_estimate_m3 is not None
+                    else None
+                ),
+                "shadow_comparison": r.shadow_comparison,
+                "shadow_candidate_v3_estimate_m3": (
+                    round(r.shadow_candidate_v3_estimate_m3, 2)
+                    if r.shadow_candidate_v3_estimate_m3 is not None
+                    else None
+                ),
+                "shadow_candidate_v3_comparison": r.shadow_candidate_v3_comparison,
             }
             for i, r in enumerate(results)
         ]

@@ -31,8 +31,8 @@ def health_check() -> Dict[str, Any]:
     Does NOT require a database connection.
     """
     # Check if model artifacts are available
-    from pathlib import Path
-    model_dir = Path("data/models")
+    from app.config import get_settings
+    model_dir = get_settings().model_dir_path
     pipeline_available = (model_dir / "encoders.joblib").exists()
 
     return {

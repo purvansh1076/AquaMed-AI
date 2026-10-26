@@ -183,6 +183,10 @@ export interface Translations {
   explainExpertPageTitle: string;
   explainExpertPageSubtitle: string;
   shapUnavailableText: string;
+
+  // Phase 14: Farmer Portal Page
+  farmerPortalTitle: string;
+  farmerPortalDesc: string;
 }
 
 export const TRANSLATIONS: Record<Language, Translations> = {
@@ -351,6 +355,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     explainExpertPageTitle: '🔬 Decision Explanation',
     explainExpertPageSubtitle: 'Trace how AquaMediAI moved from predicted water demand to the final sharing agreement.',
     shapUnavailableText: 'Detailed feature attribution was not available for this prediction.',
+    farmerPortalTitle: 'Check My Farm Water Need',
+    farmerPortalDesc: 'Enter your farm details below to get an AI-calculated water demand estimate for today.',
   },
 
   hi: {
@@ -520,6 +526,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     explainExpertPageTitle: '🔬 निर्णय स्पष्टीकरण',
     explainExpertPageSubtitle: 'देखें कि AquaMediAI अनुमानित पानी की माँग से अंतिम सहमति तक कैसे पहुँचा।',
     shapUnavailableText: 'इस पूर्वानुमान के लिए विस्तृत विशेषता योगदान उपलब्ध नहीं था।',
+    farmerPortalTitle: 'मेरे खेत की पानी की ज़रूरत जांचें',
+    farmerPortalDesc: 'आज के लिए AI-आधारित पानी की माँग का अनुमान पाने के लिए नीचे अपने खेत का विवरण दर्ज करें।',
   },
 
   gu: {
@@ -687,5 +695,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     explainExpertPageTitle: '🔬 નિર્ણય સમજૂતી',
     explainExpertPageSubtitle: 'તપાસો કે AquaMediAI અંદાજિત પાણીની માંગથી અંતિમ સહમતિ સુધી કેવી રીતે પહોંચ્યું.',
     shapUnavailableText: 'આ અનુમાન માટે વિગતવાર ફીચર યોગદાન ઉપલબ્ધ નહોતું.',
+    farmerPortalTitle: 'મારા ખેતરની પાણીની જરૂરિયાત ચકાસો',
+    farmerPortalDesc: 'આજના માટે AI-ગણતરી કરેલ પાણીની માંગનો અંદાજ મેળવવા માટે નીચે તમારા ખેતરની વિગતો દાખલ કરો.',
   },
 };
