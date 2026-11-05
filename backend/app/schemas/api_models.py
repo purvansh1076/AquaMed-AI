@@ -58,7 +58,7 @@ class ScenarioRunRequest(BaseModel):
     )
     model_name: str = Field(
         default="XGBoost",
-        description="ML model to use: 'XGBoost' or 'RandomForest'.",
+        description="Active production model: 'XGBoost'.",
     )
     available_water_override_m3: Optional[float] = Field(
         default=None,

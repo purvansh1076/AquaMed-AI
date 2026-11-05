@@ -1,0 +1,28 @@
+{
+  "dataset_name": "candidate_v1_agricultural_net_demand",
+  "target_name": "net_irrigation_m3_per_day",
+  "target_units": "m3/day",
+  "region_id": "maharashtra_ahmednagar",
+  "region_name": "Pravara-Mula Canal Command (Ahmednagar, Central Maharashtra)",
+  "centroid_lat": 19.09,
+  "centroid_lon": 74.74,
+  "total_records": 976,
+  "total_unique_dates": 365,
+  "date_start": "2023-01-01",
+  "date_end": "2023-12-31",
+  "crops_included": [
+    "cotton",
+    "groundnut",
+    "maize",
+    "soybean",
+    "sugarcane",
+    "wheat"
+  ],
+  "missing_values_count": 0,
+  "zero_requirement_fraction": 0.17725409836065573,
+  "mean_target_m3_day": 33.64026834016393,
+  "max_target_m3_day": 136.89,
+  "target_reproducibility_verified": true,
+  "area_linearity_verified": true,
+  "status": "PASSED"
+}

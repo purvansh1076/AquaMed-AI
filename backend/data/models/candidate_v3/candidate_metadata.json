@@ -1,0 +1,9 @@
+{
+  "version": "candidate_v3",
+  "selected_configuration": "two_stage_xgb_set_c",
+  "status": "OFFLINE_CANDIDATE_ONLY",
+  "production_deployment_state": "NOT_PROMOTED",
+  "created_at": "2026-10-25T04:49:16.207630+00:00",
+  "target_units": "m3/day",
+  "scientific_notice": "Targets represent calculated theoretical crop-water balances based on FAO-56 Penman-Monteith and USDA-SCS effective rainfall. They are NOT measured field canal deliveries or soil moisture readings."
+}

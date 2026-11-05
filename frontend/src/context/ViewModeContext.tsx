@@ -35,7 +35,7 @@ export const ViewModeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [language, setLanguageState] = useState<Language>(() => {
     try {
       const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-      if (saved === 'en' || saved === 'hi' || saved === 'gu') {
+      if (saved === 'en' || saved === 'hi' || saved === 'gu' || saved === 'mr') {
         return saved;
       }
     } catch {

@@ -86,12 +86,14 @@ app.add_middleware(
 )
 
 # ─── Routers ──────────────────────────────────────────────────────────────────
-# Phase 8: FastAPI Integration Layer
+# Phase 8: FastAPI Integration Layer & Role-Based Access Control
 
 from app.api.health import router as health_router
 from app.api.scenario_routes import router as scenario_router
+from app.api.auth import router as auth_router
 
 app.include_router(health_router, prefix="/api/v1", tags=["System"])
+app.include_router(auth_router, prefix="/api/v1", tags=["Authentication"])
 app.include_router(scenario_router, prefix="/api/v1", tags=["Pipeline"])
 
 

@@ -73,7 +73,17 @@ export const Header: React.FC = () => {
             <option value="en">English</option>
             <option value="hi">हिन्दी (Hindi)</option>
             <option value="gu">ગુજરાતી (Gujarati)</option>
+            <option value="mr">मराठी (Marathi)</option>
           </select>
+        </div>
+
+        {/* Active Production Model Indicator */}
+        <div
+          className="active-model-pill pill-header"
+          title="Verified active production regressor: XGBoost (Test R² = 0.9699)"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', cursor: 'default' }}
+        >
+          <span>Model: XGBoost</span>
         </div>
 
         {/* Backend API Health Status */}

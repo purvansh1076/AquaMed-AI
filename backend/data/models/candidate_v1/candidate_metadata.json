@@ -1,0 +1,21 @@
+{
+  "candidate_version": "candidate_v1",
+  "decision": "GO_SURROGATE_OFFLINE__INSUFFICIENT_DATA_FOR_FIELD_PRODUCTION",
+  "decision_rationale": "Both candidate ML models demonstrate clear surrogate fidelity to theoretical FAO-56 net irrigation requirements (Random Forest MAE 2.15 m3/day, XGBoost MAE 2.42 m3/day, achieving >80% MAE reduction over Naive Mean Baseline on held-out future dates). However, because the reference target is mathematically calculated from agroclimatological formulas and single-station NASA POWER weather without measured farm-gate water delivery records, the candidate models MUST REMAIN OFFLINE CANDIDATES. Production activation is withheld until multi-year empirical irrigation observations from Maharashtra water user associations are curated.",
+  "pilot_region": "Pravara-Mula Canal Command (Ahmednagar, Central Maharashtra)",
+  "coordinates": {
+    "lat": 19.09,
+    "lon": 74.74
+  },
+  "provenance": {
+    "weather_source": "NASA POWER Agroclimatology (Ahmednagar Centroid)",
+    "agronomic_reference": "FAO-56 Penman-Monteith ET0 + USDA SCS Effective Rainfall",
+    "crop_registry": "CropRegistry v1.0.0 (FAO-56 Table 12 + MPKV Rahuri)"
+  },
+  "artifact_hashes": {
+    "candidate_rf_model.joblib": "37A7117EDEB522FAFC84D3F6A8CBB1A594C147BB4C7651C19B691D06C5BE8435",
+    "candidate_xgb_model.joblib": "49CD94B33FC7317C03845167755CD8814D1933839C22DD13CABEA756872976EB",
+    "candidate_preprocessor.joblib": "E4A47B8442B39E9958E485F965A2ABC2E824E3BBE1E0F44D376FA46B47A553E5"
+  },
+  "created_at_utc": "2026-10-24T18:01:10.119134+00:00"
+}

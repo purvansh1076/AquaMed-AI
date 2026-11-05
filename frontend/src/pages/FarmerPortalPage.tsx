@@ -620,7 +620,7 @@ export const FarmerPortalPage: React.FC = () => {
             </div>
             <div style={{ fontSize: '18px', color: 'var(--text-muted)', fontWeight: 600 }}>m³ / day</div>
             <div style={{ fontSize: '12px', color: 'var(--text-subtle)', marginTop: '6px' }}>
-              Calculated by: {result.model_name} AI Model
+              Calculated by: {result.model_name} AI Model (Verified Production)
             </div>
           </div>
 

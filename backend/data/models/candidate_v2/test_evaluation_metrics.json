@@ -1,0 +1,191 @@
+{
+  "selected_model": "Candidate XGBoost",
+  "comparators": {
+    "naive_mean_baseline": {
+      "model_name": "Naive Mean Baseline",
+      "target_units": "m3/day",
+      "n_samples": 976,
+      "mae": 18.3557,
+      "rmse": 24.3014,
+      "nrmse": 0.8724,
+      "r2": -0.0022,
+      "max_error": 105.2261
+    },
+    "deterministic_fao56_reference": {
+      "model_name": "Deterministic FAO-56 Reference",
+      "target_units": "m3/day",
+      "n_samples": 976,
+      "mae": 0.0,
+      "rmse": 0.0,
+      "nrmse": 0.0,
+      "r2": 1.0,
+      "max_error": 0.0
+    }
+  },
+  "candidate_models": {
+    "candidate_random_forest": {
+      "model_name": "Candidate RandomForest",
+      "target_units": "m3/day",
+      "n_samples": 976,
+      "mae": 6.7149,
+      "rmse": 11.2933,
+      "nrmse": 0.4054,
+      "r2": 0.7836,
+      "max_error": 65.223,
+      "mean_signed_bias": 0.4687,
+      "mae_reduction_over_naive_pct": 63.42
+    },
+    "candidate_xgboost": {
+      "model_name": "Candidate XGBoost",
+      "target_units": "m3/day",
+      "n_samples": 976,
+      "mae": 6.6685,
+      "rmse": 10.8195,
+      "nrmse": 0.3884,
+      "r2": 0.8013,
+      "max_error": 53.8509,
+      "mean_signed_bias": 0.1573,
+      "mae_reduction_over_naive_pct": 63.67
+    }
+  },
+  "sliced_diagnostics": {
+    "by_crop": {
+      "cotton": {
+        "n_samples": 170,
+        "rf_mae": 7.1281,
+        "xgb_mae": 7.0146,
+        "target_mean": 21.0724
+      },
+      "groundnut": {
+        "n_samples": 117,
+        "rf_mae": 7.3681,
+        "xgb_mae": 7.0452,
+        "target_mean": 17.3736
+      },
+      "maize": {
+        "n_samples": 107,
+        "rf_mae": 7.466,
+        "xgb_mae": 7.2847,
+        "target_mean": 18.1141
+      },
+      "soybean": {
+        "n_samples": 96,
+        "rf_mae": 8.0615,
+        "xgb_mae": 7.8655,
+        "target_mean": 18.6968
+      },
+      "sugarcane": {
+        "n_samples": 365,
+        "rf_mae": 7.2971,
+        "xgb_mae": 7.3216,
+        "target_mean": 39.0458
+      },
+      "wheat": {
+        "n_samples": 121,
+        "rf_mae": 2.0141,
+        "xgb_mae": 2.3532,
+        "target_mean": 29.6381
+      }
+    },
+    "by_month": {
+      "1": {
+        "n_samples": 62,
+        "rf_mae": 2.7667,
+        "xgb_mae": 2.2674,
+        "target_mean": 29.0269
+      },
+      "2": {
+        "n_samples": 56,
+        "rf_mae": 1.7507,
+        "xgb_mae": 2.411,
+        "target_mean": 33.3819
+      },
+      "3": {
+        "n_samples": 32,
+        "rf_mae": 3.2299,
+        "xgb_mae": 4.6991,
+        "target_mean": 54.0225
+      },
+      "4": {
+        "n_samples": 30,
+        "rf_mae": 3.2162,
+        "xgb_mae": 3.4902,
+        "target_mean": 98.0426
+      },
+      "5": {
+        "n_samples": 31,
+        "rf_mae": 17.3504,
+        "xgb_mae": 14.008,
+        "target_mean": 53.4392
+      },
+      "6": {
+        "n_samples": 57,
+        "rf_mae": 11.2589,
+        "xgb_mae": 11.3565,
+        "target_mean": 32.8599
+      },
+      "7": {
+        "n_samples": 155,
+        "rf_mae": 8.3879,
+        "xgb_mae": 8.9354,
+        "target_mean": 21.5711
+      },
+      "8": {
+        "n_samples": 155,
+        "rf_mae": 10.7251,
+        "xgb_mae": 9.9663,
+        "target_mean": 22.3791
+      },
+      "9": {
+        "n_samples": 143,
+        "rf_mae": 6.5547,
+        "xgb_mae": 6.6941,
+        "target_mean": 18.0497
+      },
+      "10": {
+        "n_samples": 102,
+        "rf_mae": 7.0865,
+        "xgb_mae": 7.3887,
+        "target_mean": 20.9411
+      },
+      "11": {
+        "n_samples": 90,
+        "rf_mae": 1.3639,
+        "xgb_mae": 1.9078,
+        "target_mean": 22.1509
+      },
+      "12": {
+        "n_samples": 63,
+        "rf_mae": 2.5287,
+        "xgb_mae": 1.3305,
+        "target_mean": 28.483
+      }
+    },
+    "by_demand_tier": {
+      "zero_demand": {
+        "n_samples": 220,
+        "rf_mae": 11.8368,
+        "xgb_mae": 10.4217,
+        "target_mean": 0.0
+      },
+      "low_demand_0_30": {
+        "n_samples": 368,
+        "rf_mae": 5.0381,
+        "xgb_mae": 4.8455,
+        "target_mean": 20.5025
+      },
+      "med_demand_30_60": {
+        "n_samples": 323,
+        "rf_mae": 5.1612,
+        "xgb_mae": 6.2307,
+        "target_mean": 42.9594
+      },
+      "high_demand_gt_60": {
+        "n_samples": 65,
+        "rf_mae": 6.593,
+        "xgb_mae": 6.4615,
+        "target_mean": 88.6965
+      }
+    }
+  }
+}

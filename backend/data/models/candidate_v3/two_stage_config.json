@@ -1,0 +1,8 @@
+{
+  "model_type": "TwoStageIrrigationModel",
+  "zero_threshold": 0.001,
+  "decision_threshold": 0.2,
+  "seed": 42,
+  "classifier_type": "XGBClassifier",
+  "regressor_type": "XGBRegressor"
+}

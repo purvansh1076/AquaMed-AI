@@ -1,0 +1,1 @@
+"""AquaMediAI Core Module."""

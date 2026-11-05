@@ -2,7 +2,7 @@
 
 ## Abstract
 
-AquaMediAI is an Explainable AI-Based Multi-Agent Water-Sharing Dispute Mediation System for Farmers. The system combines predictive modeling, constrained optimization, and multi-agent negotiation to support fair and efficient water allocation in agricultural irrigation scenarios. All data and computations are synthetically generated using agronomically grounded formulas (FAO-56 single-crop-coefficient method), and the system is designed as a academic prototype for third-year B.Tech Computer Science and Engineering evaluation.
+AquaMediAI is an Explainable AI-Based Multi-Agent Water-Sharing Dispute Mediation System for Farmers. The system combines predictive modeling, constrained optimization, and multi-agent negotiation to support fair and efficient water allocation in agricultural irrigation scenarios. All data and computations are synthetically generated using agronomically grounded formulas (FAO-56 single-crop-coefficient method), and the system is designed as an academic prototype for third-year B.Tech Computer Science and Engineering evaluation.
 
 ## Problem Statement
 

@@ -6,7 +6,7 @@
  * No external translation APIs are used.
  */
 
-export type Language = 'en' | 'hi' | 'gu';
+export type Language = 'en' | 'hi' | 'gu' | 'mr';
 
 export interface Translations {
   // App branding & header
@@ -187,6 +187,30 @@ export interface Translations {
   // Phase 14: Farmer Portal Page
   farmerPortalTitle: string;
   farmerPortalDesc: string;
+
+  // Government portal, welcome & authentication
+  welcomePortalTitle: string;
+  welcomePortalSubtitle: string;
+  welcomeRolePrompt: string;
+  farmerCardTitle: string;
+  farmerCardBadge: string;
+  farmerCardDesc: string;
+  farmerCardBtn: string;
+  expertCardTitle: string;
+  expertCardBadge: string;
+  expertCardDesc: string;
+  expertCardBtn: string;
+  loginTitle: string;
+  loginSubtitle: string;
+  loginEmailLabel: string;
+  loginPasswordLabel: string;
+  loginSubmitBtn: string;
+  loginBackBtn: string;
+  activeModelLabel: string;
+  governmentBadge: string;
+  logoutBtn: string;
+  farmerModeActive: string;
+  expertModeActive: string;
 }
 
 export const TRANSLATIONS: Record<Language, Translations> = {
@@ -357,6 +381,28 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     shapUnavailableText: 'Detailed feature attribution was not available for this prediction.',
     farmerPortalTitle: 'Check My Farm Water Need',
     farmerPortalDesc: 'Enter your farm details below to get an AI-calculated water demand estimate for today.',
+    welcomePortalTitle: 'Agricultural Decision Support System',
+    welcomePortalSubtitle: 'Government-Grade Water Dispute Mediation & Crop Health Intelligence',
+    welcomeRolePrompt: 'Select your portal access level to continue:',
+    farmerCardTitle: 'Farmer Access',
+    farmerCardBadge: 'Frictionless Access • No Credentials Required',
+    farmerCardDesc: 'Immediate access to daily crop water demand predictions, farm health diagnostics, irrigation schedules, and weather advisories.',
+    farmerCardBtn: 'Continue as Farmer',
+    expertCardTitle: 'Agricultural Expert Access',
+    expertCardBadge: 'Official Government Authentication Required',
+    expertCardDesc: 'Dedicated portal for agricultural extension officers, agronomists, and dispute mediators. Access multi-agent mediation, LP allocations, and model diagnostics.',
+    expertCardBtn: 'Sign In as Agricultural Expert',
+    loginTitle: 'Agricultural Expert Sign-In',
+    loginSubtitle: 'Enter your official credentials to access the mediation system',
+    loginEmailLabel: 'Username or Official Email',
+    loginPasswordLabel: 'Password',
+    loginSubmitBtn: 'Authenticate & Enter',
+    loginBackBtn: 'Back to Role Selection',
+    activeModelLabel: 'Active Prediction Model: XGBoost (Verified Production)',
+    governmentBadge: 'Department of Agriculture & Water Resources • Official Platform',
+    logoutBtn: 'Sign Out',
+    farmerModeActive: 'Farmer Guest Mode',
+    expertModeActive: 'Agricultural Extension Officer',
   },
 
   hi: {
@@ -528,6 +574,28 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     shapUnavailableText: 'इस पूर्वानुमान के लिए विस्तृत विशेषता योगदान उपलब्ध नहीं था।',
     farmerPortalTitle: 'मेरे खेत की पानी की ज़रूरत जांचें',
     farmerPortalDesc: 'आज के लिए AI-आधारित पानी की माँग का अनुमान पाने के लिए नीचे अपने खेत का विवरण दर्ज करें।',
+    welcomePortalTitle: 'कृषि निर्णय सहायता प्रणाली',
+    welcomePortalSubtitle: 'सरकारी स्तर की जल विवाद मध्यस्थता और फसल स्वास्थ्य बुद्धिमत्ता',
+    welcomeRolePrompt: 'जारी रखने के लिए अपना पोर्टल स्तर चुनें:',
+    farmerCardTitle: 'किसान प्रवेश',
+    farmerCardBadge: 'तत्काल प्रवेश • किसी पासवर्ड की आवश्यकता नहीं',
+    farmerCardDesc: 'दैनिक फसल जल मांग अनुमान, सिंचाई सलाह और मौसम की जानकारी तुरंत देखें।',
+    farmerCardBtn: 'किसान के रूप में आगे बढ़ें',
+    expertCardTitle: 'कृषि विशेषज्ञ प्रवेश',
+    expertCardBadge: 'आधिकारिक प्रमाणीकरण आवश्यक',
+    expertCardDesc: 'कृषि विस्तार अधिकारियों और मध्यस्थों के लिए। मल्टी-एजेंट मध्यस्थता और मॉडल विश्लेषण देखें।',
+    expertCardBtn: 'कृषि विशेषज्ञ के रूप में लॉगिन करें',
+    loginTitle: 'कृषि विशेषज्ञ लॉगिन',
+    loginSubtitle: 'मध्यस्थता प्रणाली में प्रवेश करने के लिए अपने क्रेडेंशियल दर्ज करें',
+    loginEmailLabel: 'उपयोगकर्ता नाम या आधिकारिक ईमेल',
+    loginPasswordLabel: 'पासवर्ड',
+    loginSubmitBtn: 'प्रमाणित करें और प्रवेश करें',
+    loginBackBtn: 'वापस जाएं',
+    activeModelLabel: 'सक्रिय भविष्यवाणी मॉडल: XGBoost (सत्यापित उत्पादन)',
+    governmentBadge: 'कृषि एवं जल संसाधन विभाग • आधिकारिक मंच',
+    logoutBtn: 'लॉगआउट',
+    farmerModeActive: 'किसान गेस्ट मोड',
+    expertModeActive: 'कृषि विस्तार अधिकारी',
   },
 
   gu: {
@@ -697,5 +765,218 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     shapUnavailableText: 'આ અનુમાન માટે વિગતવાર ફીચર યોગદાન ઉપલબ્ધ નહોતું.',
     farmerPortalTitle: 'મારા ખેતરની પાણીની જરૂરિયાત ચકાસો',
     farmerPortalDesc: 'આજના માટે AI-ગણતરી કરેલ પાણીની માંગનો અંદાજ મેળવવા માટે નીચે તમારા ખેતરની વિગતો દાખલ કરો.',
+    welcomePortalTitle: 'કૃષિ નિર્ણય સહાયક પ્રણાલી',
+    welcomePortalSubtitle: 'સરકારી સ્તરની જળ વિવાદ મધ્યસ્થતા અને પાક સ્વાસ્થ્ય બુદ્ધિ',
+    welcomeRolePrompt: 'આગળ વધવા માટે તમારું પોર્ટલ સ્તર પસંદ કરો:',
+    farmerCardTitle: 'ખેડૂત પ્રવેશ',
+    farmerCardBadge: 'તાત્કાલિક પ્રવેશ • કોઈ પાસવર્ડની જરૂર નથી',
+    farmerCardDesc: 'દૈનિક પાકની પાણીની માંગ, સિંચાઈ માર્ગદર્શન અને હવામાનની માહિતી તરત જુઓ.',
+    farmerCardBtn: 'ખેડૂત તરીકે આગળ વધો',
+    expertCardTitle: 'કૃષિ નિષ્ણાત પ્રવેશ',
+    expertCardBadge: 'સત્તાવાર પ્રમાણીકરણ જરૂરી',
+    expertCardDesc: 'કૃષિ અધિકારીઓ અને મધ્યસ્થીઓ માટે. મલ્ટી-એજન્ટ મધ્યસ્થતા અને મોડેલ વિશ્લેષણ મેળવો.',
+    expertCardBtn: 'કૃષિ નિષ્ણાત તરીકે લૉગિન કરો',
+    loginTitle: 'કૃષિ નિષ્ણાત લૉગિન',
+    loginSubtitle: 'મધ્યસ્થતા સિસ્ટમમાં પ્રવેશવા માટે ઓળખપત્ર દાખલ કરો',
+    loginEmailLabel: 'વપરાશકર્તા નામ અથવા સત્તાવાર ઇમેઇલ',
+    loginPasswordLabel: 'પાસવર્ડ',
+    loginSubmitBtn: 'પ્રમાણિત કરો અને પ્રવેશ કરો',
+    loginBackBtn: 'પાછા જાઓ',
+    activeModelLabel: 'સક્રિય અનુમાન મૉડલ: XGBoost (ચકાસાયેલ ઉત્પાદન)',
+    governmentBadge: 'કૃષિ અને જળ સંસાધન વિભાગ • સત્તાવાર પ્લેટફોર્મ',
+    logoutBtn: 'લૉગઆઉટ',
+    farmerModeActive: 'ખેડૂત ગેસ્ટ મોડ',
+    expertModeActive: 'કૃષિ વિસ્તરણ અધિકારી',
+  },
+
+  mr: {
+    appTitle: 'AquaMediAI',
+    appSubtitle: 'जल वाटप साहाय्यक',
+    farmerView: '👨‍🌾 शेतकरी दृश्य',
+    expertView: '🔬 तज्ज्ञ दृश्य',
+    waterConflictMonitor: 'जल संघर्ष निरीक्षक',
+    waterConflictsFound: 'पाणी वाटपातील समस्या आढळल्या',
+    mostUrgentIssue: 'सर्वात महत्त्वाची समस्या',
+    waterShortage: 'पाण्याची कमतरता',
+    availableWaterVsFarmDemand: 'उपलब्ध पाणी विरूद्ध शेतीची मागणी',
+    overlappingIrrigationSchedules: 'एकाच वेळी सिंचन वेळापत्रक',
+    highWaterPriority: 'उच्च पाणी प्राधान्य',
+    farmsInvolved: 'समाविष्ट शेतकरी',
+    whyThisIssueWasFlagged: 'ही समस्या का नोंदवली गेली',
+    waterPriorityScore: 'पाणी प्राधान्य गुण',
+    cropWaterSensitivity: 'पिकाची पाणी संवेदनशीलता',
+    growthStageImportance: 'वाढ टप्प्याचे महत्त्व',
+    overallPriority: 'एकूण प्राधान्य',
+    waterShortageDesc: 'उपलब्ध पाण्याचे प्रमाण सर्व शेतकऱ्यांच्या मागणीपेक्षा कमी होते.',
+    apiConnected: 'एपीआय जोडले आहे',
+    backendOffline: 'बॅकएंड ऑफलाइन',
+    checkingApi: 'तपासत आहे...',
+
+    myWaterSharing: '💧 माझे पाणी वाटप',
+    myWaterSharingDesc: 'तुमच्या पिकासाठी पाण्याच्या वाटपाचे स्पष्ट व सोपे दृश्य.',
+    selectFarmer: 'शेतकरी निवडा',
+    viewingFor: 'यांच्यासाठी पाणी माहिती पाहत आहात',
+    noScenarioTitle: 'कोणतीही पाणी योजना उपलब्ध नाही',
+    noScenarioDesc: 'पाणी वाटप पाहण्यासाठी नवीन योजना सुरू करा.',
+    startScenarioBtn: 'पाणी वाटप योजना सुरू करा',
+
+    waterGivenToMe: '💧 मला मिळालेले पाणी',
+    waterGivenDesc: 'हे तुम्हाला वाटप केलेले पाणी आहे.',
+    waterNeeded: '🌱 लागणारे पाणी',
+    waterNeededDesc: 'तुमच्या पिकासाठी अंदाजे लागणारे पाणी.',
+    waterAvailable: '💦 उपलब्ध पाणी',
+    waterAvailableDesc: 'सर्व शेतकऱ्यांसाठी कालव्यात उपलब्ध एकूण पाणी.',
+    sharingResult: '🤝 वाटप निकाल',
+    sharingResultDesc: 'पाणी वाटप कसे ठरले ते पहा.',
+
+    yourResultTitle: '💧 तुमचे पाणी वाटप निकाल',
+    requestedLabel: 'मागितलेले पाणी',
+    receivedLabel: 'मिळालेले पाणी',
+    satisfiedLabel: 'समाधान प्रमाण',
+    surplusNote: 'पाणी पुरेसे असल्याने पूर्ण मागणी मंजूर झाली.',
+    shortageNote: 'पाण्याच्या तुटवड्यामुळे सर्वांना समप्रमाणात वाटप करण्यात आले.',
+    agreementReachedNote: 'सर्व शेतकऱ्यांमध्ये एकमत झाले.',
+    agreementPendingNote: 'वाटप योजनेवर अंतिम संमती अपेक्षित आहे.',
+
+    whyTitle: '💡 मला एवढे पाणी का मिळाले?',
+    whySubtitle: 'तुमचे वाटप पिकाची गरज, उपलब्धता आणि नियमांनुसार ठरवले गेले.',
+
+    reasonResourceShortageTitle: 'पाण्याची कमतरता',
+    reasonResourceShortageDesc: 'एकूण पाणी मागणीपेक्षा कमी असल्याने वाटप प्रमाणात केले गेले.',
+    reasonHighUrgencyTitle: 'पिकाची तातडीची गरज',
+    reasonHighUrgencyDesc: 'पिकाच्या नाजूक अवस्थेमुळे या पिकाला प्राधान्य दिले गेले.',
+    reasonHighCropSensitivityTitle: 'पाणी संवेदनशील पीक',
+    reasonHighCropSensitivityDesc: 'हे पीक पाण्याशिवाय तग धरू शकत नसल्याने संरक्षण दिले गेले.',
+    reasonMinimumRequirementTitle: 'किमान पाण्याची हमी',
+    reasonMinimumRequirementDesc: 'पिकाचे नुकसान टाळण्यासाठी आवश्यक किमान पाणी दिले गेले.',
+    reasonMaximumRequirementTitle: 'कमाल मर्यादा',
+    reasonMaximumRequirementDesc: 'पाण्याचा अपव्यय टाळण्यासाठी कमाल मर्यादेत पाणी दिले गेले.',
+    reasonCanalCapacityTitle: 'कालवा क्षमता मर्यादा',
+    reasonCanalCapacityDesc: 'कालव्यातून पाणी सोडण्याच्या मर्यादेनुसार नियोजन केले गेले.',
+    reasonWindowConflictTitle: 'वेळेचा ताळमेळ',
+    reasonWindowConflictDesc: 'एकाच वेळी मागणी आल्यामुळे पाण्याचे तास विभागले गेले.',
+    reasonFairnessAdjustmentTitle: 'न्यायी वाटप समायोजन',
+    reasonFairnessAdjustmentDesc: 'सर्व शेतकऱ्यांना पाण्याचा योग्य हिस्सा मिळावा म्हणून समायोजन केले गेले.',
+    reasonNegotiationConcessionTitle: 'परस्पर सहमतीने तडजोड',
+    reasonNegotiationConcessionDesc: 'शेतकऱ्यांनी सहकार्याने थोडी तडजोड स्वीकारली.',
+    reasonBatnaProtectionTitle: 'शेतकरी हक्क संरक्षण',
+    reasonBatnaProtectionDesc: 'कोणत्याही शेतकऱ्याचे नुकसान होणार नाही याची खात्री केली गेली.',
+    reasonUnmetDemandTitle: 'अपूर्ण मागणी',
+    reasonUnmetDemandDesc: 'तुटवड्यामुळे काही मागणी अपूर्ण राहिली.',
+    reasonFullSatisfactionTitle: 'पूर्ण मागणी मंजूर',
+    reasonFullSatisfactionDesc: 'पिकासाठी लागणारे १००% पाणी मंजूर झाले आहे.',
+    reasonWaterSurplusTitle: 'अतिरिक्त पाणी उपलब्ध',
+    reasonWaterSurplusDesc: 'मागणीपेक्षा पाणी जास्त उपलब्ध होते.',
+
+    conflictSectionTitle: '⚠️ पाणी वाटपातील समस्या',
+    conflictSectionSubtitle: 'पाणी नियोजन करताना खालील बाबींची काळजी घेतली गेली.',
+    noConflictsFound: 'कोणतीही समस्या नाही — पाणी पुरवठा सुरळीत आहे.',
+    conflictWaterShortage: 'पाण्याची कमतरता',
+    conflictWaterShortageDesc: 'उपलब्ध पाणी सर्व शेतकऱ्यांच्या मागणीपेक्षा कमी होते.',
+    conflictWindowOverlap: 'एकाच वेळी सिंचनाची वेळ',
+    conflictWindowOverlapDesc: 'अनेक शेतकऱ्यांनी एकाच वेळी पाणी मागितले होते.',
+    conflictCanalCapacity: 'कालवा मर्यादा',
+    conflictCanalCapacityDesc: 'कालव्याची पाणी वाहून नेण्याची क्षमता मर्यादित आहे.',
+    conflictMinRequirement: 'किमान गरज',
+    conflictMinRequirementDesc: 'किमान आवश्यक पाणी पुरवठा सुरक्षित करण्यात आला.',
+    conflictHighCropStress: 'पिकाचा पाण्याचा ताण',
+    conflictHighCropStressDesc: 'काही पिकांवर पाण्याचा जास्त ताण होता.',
+    conflictTimingDetected: 'सिंचन वेळेची समस्या',
+    conflictSingularDetected: '१ समस्या आढळली',
+    conflictPluralDetected: 'समस्या आढळल्या',
+    whatHappened: 'काय घडले?',
+    whyItMatters: 'याचे काय परिणाम होतात?',
+
+    howSharedTitle: '🤝 पाणी कसे वाटप झाले?',
+    howSharedSubtitle: 'न्यायी व समतोल पाणी वाटपाची प्रक्रिया.',
+    step1: '१. पिकांची गरज मोजली',
+    step1Desc: 'प्रत्येक पिकासाठी हवामान व क्षेत्रानुसार पाण्याची मागणी काढली.',
+    step2: '२. उपलब्ध पाणी तपासले',
+    step2Desc: 'कालव्यात किती पाणी उपलब्ध आहे याची खातरजमा केली.',
+    step3: '३. समस्यांची ओळख पटवली',
+    step3Desc: 'तुटवडा आणि वेळेच्या अडचणी शोधल्या.',
+    step4: '४. संगणकीय वाटप केले',
+    step4Desc: 'गणिती सूत्रांद्वारे सर्वांना न्यायी हिस्सा निश्चित केला.',
+    step5: '५. परस्पर सहमती साध्य केली',
+    step5Desc: 'सर्व शेतकरी घटकांचे समाधान तपासून योजना अंतिम केली.',
+
+    fairSharingTitle: '⚖️ न्यायी पाणी वाटप',
+    fairSharingDesc: 'सर्व शेतकऱ्यांना त्यांच्या पिकाच्या गरजेनुसार पाणी मिळाले.',
+    fairSharingNote: 'लहान आणि मोठ्या शेतकऱ्यांमध्ये कोणताही भेदभाव केला जात नाही.',
+
+    techDetailsTitle: 'तांत्रिक माहिती',
+    techDetailsSubtitle: 'तज्ज्ञांसाठी तपशीलवार माहिती',
+    modelUsed: 'एआय अंदाज मॉडेल',
+    lpSolver: 'ऑप्टिमायझेशन सॉल्व्हर',
+    fairnessScore: 'न्यायीपणा गुणांक',
+    rawCodes: 'रीझन कोड्स',
+
+    startWaterSharingTitle: '💧 पाणी वाटप नियोजन',
+    startWaterSharingSubtitle: 'पाण्याची परिस्थिती निवडा, आम्ही योग्य वाटप योजना तयार करू.',
+    q1SituationTitle: '💧 आज पाण्याची परिस्थिती कशी आहे?',
+    q1OptEnoughTitle: '💧 पुरेसे पाणी',
+    q1OptEnoughDesc: 'सर्व शेतकऱ्यांसाठी पुरेसे पाणी उपलब्ध आहे.',
+    q1OptSomeShortageTitle: '💧 थोडी कमतरता',
+    q1OptSomeShortageDesc: 'मागणीपेक्षा थोडे कमी पाणी उपलब्ध आहे.',
+    q1OptSeriousShortageTitle: '🚨 तीव्र टंचाई',
+    q1OptSeriousShortageDesc: 'पाणी खूप कमी असून जपून वापरावे लागेल.',
+    q1OptCropsUrgentTitle: '🌱 पिकांना तातडीची गरज',
+    q1OptCropsUrgentDesc: 'काही पिकांना त्वरित पाण्याची गरज आहे.',
+    q2FarmersTitle: '👨‍🌾 पाणी वाटपात किती शेतकरी आहेत?',
+    q2FarmersLabel: 'शेतकऱ्यांची संख्या',
+    q2FarmersHelper: 'कालव्यावर अवलंबून असलेल्या शेतकऱ्यांची संख्या निवडा.',
+    q5WaterAvailableTitle: '💦 किती पाणी उपलब्ध आहे?',
+    q5WaterAvailableHelper: 'ऐच्छिक — मानक पाणी पुरवठ्यासाठी रिकामे ठेवा.',
+    q5UnknownCheckbox: 'मला नेमके प्रमाण माहीत नाही',
+    farmerConfigUsageNote: 'तुमच्या माहितीचा वापर योग्य नियोजन करण्यासाठी केला जातो.',
+    findWaterPlanBtn: '💧 पाणी वाटप योजना शोधा',
+    findWaterPlanBtnHelper: 'पिकांची गरज आणि न्यायी वाटपाचा हिशोब केला जाईल.',
+    findingWaterPlanTitle: '💧 योजना तयार होत आहे...',
+    findingStage1: '🌱 पिकांची पाण्याची गरज मोजत आहे',
+    findingStage2: '💧 उपलब्ध पाणी तपासत आहे',
+    findingStage3: '⚠️ अडचणी शोधत आहे',
+    findingStage4: '⚖️ न्यायी वाटप तयार करत आहे',
+    findingStage5: '🤝 अंतिम सहमती तपासत आहे',
+
+    explainPageTitleFarmer: '💧 मला एवढे पाणी का मिळाले?',
+    explainPageSubtitleFarmer: 'पिकाची गरज, हवामान आणि उपलब्ध पाण्याचा विचार करून हे वाटप करण्यात आले.',
+    explainResultCardTitle: '💧 तुमचे पाणी वाटप निकाल',
+    explainWhySectionTitle: '💡 पाणी वाटपाचे कारण',
+    explainConflictSectionTitle: '⚠️ कशामुळे परिणाम झाला?',
+    explainFairnessSectionTitle: '⚖️ वाटप योग्य आहे का?',
+    explainFairnessText: 'सर्व शेतकऱ्यांच्या हिताचा विचार करून समतोल वाटप केले गेले.',
+    explainNegotiationSectionTitle: '🤝 निर्णय कसा झाला?',
+    explainNegotiationText1: 'प्रत्येक शेतकऱ्याच्या गरजेची नोंद घेण्यात आली.',
+    explainNegotiationText2: 'तुटवडा असल्यास समान कपात लागू करण्यात आली.',
+    explainNegotiationText3: 'पाणी मर्यादांचे तंतोतंत पालन केले गेले.',
+    explainExpertPageTitle: '🔬 निर्णय विश्लेषण',
+    explainExpertPageSubtitle: 'अंदाज ते अंतिम निर्णयापर्यंतची सर्व सांख्यिकी माहिती.',
+    shapUnavailableText: 'तपशीलवार विश्लेषण उपलब्ध नाही.',
+
+    farmerPortalTitle: 'माझ्या शेताची पाण्याची गरज तपासा',
+    farmerPortalDesc: 'आजच्या पिकासाठी लागणाऱ्या पाण्याचा अंदाज घेण्यासाठी शेताचा तपशील भरा.',
+
+    welcomePortalTitle: 'कृषी निर्णय साहाय्य प्रणाली',
+    welcomePortalSubtitle: 'शासकीय दर्जाची जल विवाद मध्यस्थी व पीक आरोग्य बुद्धिमत्ता',
+    welcomeRolePrompt: 'कृपया पुढे जाण्यासाठी तुमचा प्रवेश स्तर निवडा:',
+    farmerCardTitle: 'शेतकरी प्रवेश',
+    farmerCardBadge: 'सुलभ प्रवेश • कोणताही पासवर्ड नको',
+    farmerCardDesc: 'दैनिक पीक पाणी मागणी अंदाज, सिंचन मार्गदर्शन आणि हवामान सल्ला त्वरित पहा.',
+    farmerCardBtn: 'शेतकरी म्हणून पुढे जा',
+    expertCardTitle: 'कृषी तज्ज्ञ प्रवेश',
+    expertCardBadge: 'शासकीय प्रमाणीकरण आवश्यक',
+    expertCardDesc: 'कृषी विस्तार अधिकारी व मध्यस्थांसाठी. बहु-एजंट मध्यस्थी आणि मॉडेल कार्यक्षमतेचे विश्लेषण करा.',
+    expertCardBtn: 'कृषी तज्ज्ञ म्हणून लॉगिन करा',
+    loginTitle: 'कृषी तज्ज्ञ लॉगिन',
+    loginSubtitle: 'मध्यस्थी प्रणालीमध्ये प्रवेश करण्यासाठी तुमची अधिकृत माहिती भरा',
+    loginEmailLabel: 'वापरकर्ता नाव किंवा अधिकृत ईमेल',
+    loginPasswordLabel: 'पासवर्ड',
+    loginSubmitBtn: 'प्रमाणित करा व प्रवेश करा',
+    loginBackBtn: 'मागे जा',
+    activeModelLabel: 'सक्रिय अंदाज मॉडेल: XGBoost (प्रमाणित उत्पादन मॉडेल)',
+    governmentBadge: 'कृषी व जलसंपदा विभाग • अधिकृत व्यासपीठ',
+    logoutBtn: 'लॉगआउट',
+    farmerModeActive: 'शेतकरी गेस्ट मोड',
+    expertModeActive: 'कृषी विस्तार अधिकारी',
   },
 };

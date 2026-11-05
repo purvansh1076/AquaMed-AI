@@ -1,0 +1,50 @@
+{
+  "comparators": {
+    "naive_mean_baseline": {
+      "model_name": "Naive Mean Baseline",
+      "target_units": "m3/day",
+      "n_samples": 978,
+      "mae": 18.8397,
+      "rmse": 25.0665,
+      "nrmse": 0.8978,
+      "r2": -0.0019,
+      "max_error": 106.7111
+    },
+    "deterministic_fao56_reference": {
+      "model_name": "Deterministic FAO-56 Reference",
+      "target_units": "m3/day",
+      "n_samples": 978,
+      "mae": 0.0,
+      "rmse": 0.0,
+      "nrmse": 0.0,
+      "r2": 1.0,
+      "max_error": 0.0
+    }
+  },
+  "candidate_models": {
+    "candidate_random_forest": {
+      "model_name": "Candidate RandomForest",
+      "target_units": "m3/day",
+      "n_samples": 978,
+      "mae": 8.416,
+      "rmse": 12.7164,
+      "nrmse": 0.4554,
+      "r2": 0.7422,
+      "max_error": 59.6505,
+      "mae_reduction_over_naive_pct": 55.33,
+      "mean_signed_bias": -1.5069
+    },
+    "candidate_xgboost": {
+      "model_name": "Candidate XGBoost",
+      "target_units": "m3/day",
+      "n_samples": 978,
+      "mae": 7.9632,
+      "rmse": 12.0291,
+      "nrmse": 0.4308,
+      "r2": 0.7693,
+      "max_error": 59.012,
+      "mae_reduction_over_naive_pct": 57.73,
+      "mean_signed_bias": -1.8048
+    }
+  }
+}

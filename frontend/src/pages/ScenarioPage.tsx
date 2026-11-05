@@ -322,7 +322,7 @@ const ExpertScenarioConfig: React.FC = () => {
   const [scenarioType, setScenarioType] = useState<ScenarioType>('moderate_shortage');
   const [nFarmers, setNFarmers] = useState<number>(4);
   const [seed, setSeed] = useState<number>(42);
-  const [modelName, setModelName] = useState<'XGBoost' | 'RandomForest'>('XGBoost');
+  const [modelName] = useState<'XGBoost'>('XGBoost');
   const [waterOverride, setWaterOverride] = useState<string>('');
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -541,13 +541,14 @@ const ExpertScenarioConfig: React.FC = () => {
             <select
               id="model-name"
               className="form-control"
-              value={modelName}
-              onChange={(e) => setModelName(e.target.value as 'XGBoost' | 'RandomForest')}
+              value="XGBoost"
+              disabled
+              title="Active Production Model: XGBoost"
+              style={{ backgroundColor: '#f0fdf4', borderColor: '#86efac', color: '#166534', fontWeight: 600 }}
             >
               <option value="XGBoost">XGBoost (Primary — R² = 0.9736)</option>
-              <option value="RandomForest">Random Forest (Baseline — R² = 0.9737)</option>
             </select>
-            <div className="form-hint">Trained model artifact loaded from backend/data/models/.</div>
+            <div className="form-hint">Active production model locked to verified XGBoost artifact.</div>
           </div>
 
           <div className="form-group">

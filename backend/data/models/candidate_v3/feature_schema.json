@@ -1,0 +1,31 @@
+{
+  "selected_feature_set": "set_c_enriched",
+  "numeric_features": [
+    "temperature_celsius",
+    "diurnal_temp_range_celsius",
+    "humidity_percent",
+    "wind_speed_m_per_s",
+    "solar_radiation_mj_per_m2",
+    "vpd_proxy_kpa",
+    "rainfall_lag1_mm",
+    "rainfall_antecedent_3d_mm",
+    "rainfall_antecedent_7d_mm",
+    "temp_rolling_mean_3d_celsius",
+    "temp_rolling_mean_7d_celsius",
+    "solar_rad_rolling_mean_3d",
+    "doy_sin",
+    "doy_cos",
+    "farm_area_hectares",
+    "rainfall_mm",
+    "temp_vpd_interaction",
+    "antecedent_rain_ratio"
+  ],
+  "categorical_features": [
+    "crop_type",
+    "growth_stage",
+    "season"
+  ],
+  "total_feature_count": 21,
+  "forbidden_features_verified_absent": true,
+  "leakage_audit_verdict": "ZERO_LEAKAGE_CONFIRMED"
+}

@@ -73,11 +73,52 @@ export type ReasonCode = (typeof REASON_CODES)[keyof typeof REASON_CODES];
 
 // --- Request Schemas ---
 
+export interface GuestSessionResponse {
+  access_token: string;
+  token_type: string;
+  role: 'farmer_guest';
+  session_id: string;
+  display_name: string;
+  permissions: string[];
+  expires_in_seconds: number;
+}
+
+export interface ExpertLoginRequest {
+  username_or_email: string;
+  password: string;
+}
+
+export interface UserProfile {
+  email: string;
+  full_name: string;
+  role: 'expert' | 'admin';
+  department: string;
+}
+
+export interface ExpertLoginResponse {
+  access_token: string;
+  token_type: string;
+  role: 'expert' | 'admin';
+  user: UserProfile;
+  expires_in_seconds: number;
+  message: string;
+}
+
+export interface IdentityResponse {
+  sub: string;
+  role: string;
+  email?: string;
+  full_name?: string;
+  department?: string;
+  permissions: string[];
+  is_authenticated: boolean;
+}
+
 export interface ScenarioRunRequest {
   scenario_type: ScenarioType;
   n_farmers?: number;
   seed?: number;
-  model_name?: 'XGBoost' | 'RandomForest' | string;
+  model_name?: 'XGBoost' | string;
   available_water_override_m3?: number | null;
 }
 

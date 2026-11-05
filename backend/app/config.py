@@ -40,6 +40,17 @@ class Settings(BaseSettings):
     app_port: int = 8000
     secret_key: str = "CHANGE_ME_IN_PRODUCTION"
 
+    # ── Authentication & Security ──────────────────────────────────────────────
+    jwt_secret_key: str = "aquamedi_government_grade_secret_key_2026_secure_key"
+    jwt_algorithm: str = "HS256"
+    jwt_expire_hours: int = 8
+    guest_session_expire_hours: int = 24
+    expert_default_email: str = "expert@aquamedi.gov.in"
+    expert_default_password: str = "AquaExpert#2026"
+    expert_default_name: str = "Senior Agricultural Specialist"
+    auth_rate_limit_max_attempts: int = 5
+    auth_rate_limit_lockout_seconds: int = 900
+
     # ── Database ───────────────────────────────────────────────────────────────
     database_url: str = (
         "postgresql+psycopg2://aquamedi:aquamedi_secret@localhost:5432/aquamedi_db"

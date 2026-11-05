@@ -1,0 +1,30 @@
+{
+  "candidate_version": "candidate_v2",
+  "decision": "GO_FOR_OFFLINE_SURROGATE",
+  "decision_rationale": "Candidate XGBoost demonstrates strong surrogate fidelity on the out-of-year 2025 test set (Test MAE 6.67 m3/day, R2 0.8013, reducing MAE by 63.7% relative to the naive baseline), validating multi-year temporal generalization. However, because the target was mathematically generated using the FAO-56 single-crop coefficient formula rather than measured field water meters, the candidate model is designated strictly as an OFFLINE SURROGATE. The deterministic agronomic baseline remains the primary active reference in the live system.",
+  "selected_model": "Candidate XGBoost",
+  "pilot_region": "Pravara-Mula Canal Command (Ahmednagar, Central Maharashtra)",
+  "coordinates": {
+    "lat": 19.09,
+    "lon": 74.74
+  },
+  "multi_year_dataset": {
+    "source": "NASA POWER Agroclimatology (2021-2025)",
+    "total_records": 4882,
+    "total_unique_dates": 1826,
+    "crops": [
+      "cotton",
+      "groundnut",
+      "maize",
+      "soybean",
+      "sugarcane",
+      "wheat"
+    ]
+  },
+  "artifact_hashes": {
+    "candidate_rf_model.joblib": "2F5FE497BDF2072BC041B049EFD922DAE27ACC9C23FE24D881E7DD2142C6DB5E",
+    "candidate_xgb_model.joblib": "C9DF28D7045883D97E4C439D805D22071DD500156B57CA637137100E1617F65C",
+    "candidate_preprocessor.joblib": "FE5C0018F09C91C34E446BCEEE564B084513CFCC51A6667FAB85AE83120F8D80"
+  },
+  "created_at_utc": "2026-10-24T18:23:37.536928+00:00"
+}

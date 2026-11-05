@@ -1,0 +1,104 @@
+{
+  "single_stage_xgb_set_a": {
+    "config_id": "single_stage_xgb_set_a",
+    "name": "Single-Stage XGBoost (Set A Baseline)",
+    "test_metrics": {
+      "mae": 6.5841,
+      "rmse": 10.7474,
+      "nrmse": 0.3858,
+      "r2": 0.804,
+      "mean_signed_bias": 0.1675,
+      "max_error": 54.7753,
+      "n_samples": 976,
+      "target_mean": 27.8546,
+      "pred_mean": 28.022
+    },
+    "test_zero_demand_mae": 10.4157,
+    "test_positive_demand_mae": 5.4691
+  },
+  "single_stage_rf_set_a": {
+    "config_id": "single_stage_rf_set_a",
+    "name": "Single-Stage RandomForest (Set A Baseline)",
+    "test_metrics": {
+      "mae": 6.6805,
+      "rmse": 11.1493,
+      "nrmse": 0.4003,
+      "r2": 0.789,
+      "mean_signed_bias": 0.4048,
+      "max_error": 64.2473,
+      "n_samples": 976,
+      "target_mean": 27.8546,
+      "pred_mean": 28.2594
+    },
+    "test_zero_demand_mae": 11.6017,
+    "test_positive_demand_mae": 5.2484
+  },
+  "single_stage_xgb_set_b": {
+    "config_id": "single_stage_xgb_set_b",
+    "name": "Single-Stage XGBoost (Set B + Rainfall)",
+    "test_metrics": {
+      "mae": 1.6398,
+      "rmse": 2.5089,
+      "nrmse": 0.0901,
+      "r2": 0.9893,
+      "mean_signed_bias": -0.0093,
+      "max_error": 19.5885,
+      "n_samples": 976,
+      "target_mean": 27.8546,
+      "pred_mean": 27.8453
+    },
+    "test_zero_demand_mae": 0.8503,
+    "test_positive_demand_mae": 1.8695
+  },
+  "two_stage_xgb_set_a": {
+    "config_id": "two_stage_xgb_set_a",
+    "name": "Two-Stage Classifier+Regressor (Set A Baseline)",
+    "test_metrics": {
+      "mae": 6.069,
+      "rmse": 11.9823,
+      "nrmse": 0.4302,
+      "r2": 0.7563,
+      "mean_signed_bias": 1.5359,
+      "max_error": 62.9888,
+      "n_samples": 976,
+      "target_mean": 27.8546,
+      "pred_mean": 29.3905
+    },
+    "test_zero_demand_mae": 12.0343,
+    "test_positive_demand_mae": 4.333
+  },
+  "two_stage_xgb_set_b": {
+    "config_id": "two_stage_xgb_set_b",
+    "name": "Two-Stage Classifier+Regressor (Set B + Rainfall)",
+    "test_metrics": {
+      "mae": 1.3793,
+      "rmse": 2.3554,
+      "nrmse": 0.0846,
+      "r2": 0.9906,
+      "mean_signed_bias": -0.2306,
+      "max_error": 21.4167,
+      "n_samples": 976,
+      "target_mean": 27.8546,
+      "pred_mean": 27.6239
+    },
+    "test_zero_demand_mae": 0.0209,
+    "test_positive_demand_mae": 1.7746
+  },
+  "two_stage_xgb_set_c": {
+    "config_id": "two_stage_xgb_set_c",
+    "name": "Two-Stage Classifier+Regressor (Set C Enriched)",
+    "test_metrics": {
+      "mae": 1.3865,
+      "rmse": 2.3985,
+      "nrmse": 0.0861,
+      "r2": 0.9902,
+      "mean_signed_bias": -0.3216,
+      "max_error": 23.2997,
+      "n_samples": 976,
+      "target_mean": 27.8546,
+      "pred_mean": 27.533
+    },
+    "test_zero_demand_mae": 0.0162,
+    "test_positive_demand_mae": 1.7853
+  }
+}

@@ -9,7 +9,11 @@ import type {
   AllocationRequest,
   AllocationResponse,
   ConflictRequest,
+  ExpertLoginRequest,
+  ExpertLoginResponse,
+  GuestSessionResponse,
   HealthResponse,
+  IdentityResponse,
   NegotiationRequest,
   NegotiationResponse,
   PredictionBatchRequest,
@@ -25,6 +29,24 @@ export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
   'http://localhost:8000';
+
+let _authToken: string | null = null;
+try {
+  _authToken = localStorage.getItem('aquamedi_auth_token');
+} catch {
+  // Local storage unavailable
+}
+
+function getAuthHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  };
+  if (_authToken) {
+    headers['Authorization'] = `Bearer ${_authToken}`;
+  }
+  return headers;
+}
 
 class ApiServiceError extends Error {
   statusCode: number;
@@ -69,6 +91,70 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 export const api = {
+  /** Set active auth token for all subsequent requests. */
+  setAuthToken(token: string | null): void {
+    _authToken = token;
+    try {
+      if (token) {
+        localStorage.setItem('aquamedi_auth_token', token);
+      } else {
+        localStorage.removeItem('aquamedi_auth_token');
+      }
+    } catch {
+      // storage unavailable
+    }
+  },
+
+  /** Get active auth token. */
+  getAuthToken(): string | null {
+    return _authToken;
+  },
+
+  /** Create an uncredentialed guest session for farmers. */
+  async createGuestSession(): Promise<GuestSessionResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/guest-session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    });
+    const data = await handleResponse<GuestSessionResponse>(response);
+    this.setAuthToken(data.access_token);
+    return data;
+  },
+
+  /** Sign in as an Agricultural Expert. */
+  async loginExpert(request: ExpertLoginRequest): Promise<ExpertLoginResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/expert/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(request),
+    });
+    const data = await handleResponse<ExpertLoginResponse>(response);
+    this.setAuthToken(data.access_token);
+    return data;
+  },
+
+  /** Get profile of the current session. */
+  async getIdentity(): Promise<IdentityResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return handleResponse<IdentityResponse>(response);
+  },
+
+  /** Terminate session. */
+  async logout(): Promise<{ status: string; message: string }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
+      return await handleResponse<{ status: string; message: string }>(response);
+    } finally {
+      this.setAuthToken(null);
+    }
+  },
+
   /**
    * Check backend health and model pipeline availability.
    * Calls GET /api/v1/health.
@@ -98,10 +184,7 @@ export const api = {
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/scenarios/run`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(request),
       });
       return await handleResponse<ScenarioRunResponse>(response);
@@ -122,7 +205,7 @@ export const api = {
   async predictSingle(request: PredictionRequest): Promise<PredictionResponse> {
     const response = await fetch(`${API_BASE_URL}/api/v1/predictions`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(request),
     });
     return handleResponse<PredictionResponse>(response);
@@ -135,7 +218,7 @@ export const api = {
   async predictBatch(request: PredictionBatchRequest): Promise<PredictionBatchResponse> {
     const response = await fetch(`${API_BASE_URL}/api/v1/predictions/batch`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(request),
     });
     return handleResponse<PredictionBatchResponse>(response);
@@ -148,7 +231,7 @@ export const api = {
   async detectConflicts(request: ConflictRequest): Promise<ScenarioConflictReportResponse> {
     const response = await fetch(`${API_BASE_URL}/api/v1/conflicts`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(request),
     });
     return handleResponse<ScenarioConflictReportResponse>(response);
@@ -161,7 +244,7 @@ export const api = {
   async runAllocation(request: AllocationRequest): Promise<AllocationResponse> {
     const response = await fetch(`${API_BASE_URL}/api/v1/allocations`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(request),
     });
     return handleResponse<AllocationResponse>(response);
@@ -174,7 +257,7 @@ export const api = {
   async runNegotiation(request: NegotiationRequest): Promise<NegotiationResponse> {
     const response = await fetch(`${API_BASE_URL}/api/v1/negotiations`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(request),
     });
     return handleResponse<NegotiationResponse>(response);

@@ -276,7 +276,7 @@ python -m pytest tests/test_ml_pipeline.py tests/test_lp_allocator.py tests/test
 - 72/72 API tests pass after dependency fix
 - All mathematical constraints verified (H1/H2/H3, soft minimums, Nash objective)
 - FAO-56 agronomic grounding documented and verified
-- Comprehensive test coverage across 9 module categories
+- Full test coverage across 9 module categories
 - Clear synthetic-data disclaimer throughout
 - Deterministic behavior with seeded random states
 - Graceful fallback chains (LP → relaxed → proportional → empty)

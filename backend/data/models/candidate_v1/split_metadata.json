@@ -1,0 +1,16 @@
+{
+  "total_records": 976,
+  "total_unique_dates": 365,
+  "train_records": 638,
+  "train_unique_dates": 255,
+  "train_date_start": "2023-01-01",
+  "train_date_end": "2023-09-12",
+  "val_records": 200,
+  "val_unique_dates": 54,
+  "val_date_start": "2023-09-13",
+  "val_date_end": "2023-11-05",
+  "test_records": 138,
+  "test_unique_dates": 56,
+  "test_date_start": "2023-11-06",
+  "test_date_end": "2023-12-31"
+}

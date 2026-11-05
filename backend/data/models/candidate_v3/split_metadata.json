@@ -1,0 +1,16 @@
+{
+  "train_years": [
+    2021,
+    2022,
+    2023
+  ],
+  "train_samples": 2928,
+  "val_years": [
+    2024
+  ],
+  "val_samples": 978,
+  "test_years": [
+    2025
+  ],
+  "test_samples": 976
+}

@@ -1,0 +1,110 @@
+{
+  "single_stage_xgb_set_a": {
+    "config_id": "single_stage_xgb_set_a",
+    "name": "Single-Stage XGBoost (Set A Baseline)",
+    "feature_set": "set_a_baseline",
+    "model_type": "single_stage_xgb",
+    "calibrated_threshold": null,
+    "val_metrics": {
+      "mae": 7.9629,
+      "rmse": 12.0059,
+      "nrmse": 0.43,
+      "r2": 0.7702,
+      "mean_signed_bias": -1.5908,
+      "max_error": 60.8488,
+      "n_samples": 978,
+      "target_mean": 27.9215,
+      "pred_mean": 26.3307
+    }
+  },
+  "single_stage_rf_set_a": {
+    "config_id": "single_stage_rf_set_a",
+    "name": "Single-Stage RandomForest (Set A Baseline)",
+    "feature_set": "set_a_baseline",
+    "model_type": "single_stage_rf",
+    "calibrated_threshold": null,
+    "val_metrics": {
+      "mae": 8.4239,
+      "rmse": 12.7377,
+      "nrmse": 0.4562,
+      "r2": 0.7413,
+      "mean_signed_bias": -1.4919,
+      "max_error": 56.2349,
+      "n_samples": 978,
+      "target_mean": 27.9215,
+      "pred_mean": 26.4296
+    }
+  },
+  "single_stage_xgb_set_b": {
+    "config_id": "single_stage_xgb_set_b",
+    "name": "Single-Stage XGBoost (Set B + Rainfall)",
+    "feature_set": "set_b_with_rainfall",
+    "model_type": "single_stage_xgb",
+    "calibrated_threshold": null,
+    "val_metrics": {
+      "mae": 1.8672,
+      "rmse": 3.1848,
+      "nrmse": 0.1141,
+      "r2": 0.9838,
+      "mean_signed_bias": -0.1935,
+      "max_error": 23.9343,
+      "n_samples": 978,
+      "target_mean": 27.9215,
+      "pred_mean": 27.7279
+    }
+  },
+  "two_stage_xgb_set_a": {
+    "config_id": "two_stage_xgb_set_a",
+    "name": "Two-Stage Classifier+Regressor (Set A Baseline)",
+    "feature_set": "set_a_baseline",
+    "model_type": "two_stage",
+    "calibrated_threshold": 0.6,
+    "val_metrics": {
+      "mae": 6.4466,
+      "rmse": 12.3935,
+      "nrmse": 0.4439,
+      "r2": 0.7551,
+      "mean_signed_bias": -0.3957,
+      "max_error": 65.3004,
+      "n_samples": 978,
+      "target_mean": 27.9215,
+      "pred_mean": 27.5258
+    }
+  },
+  "two_stage_xgb_set_b": {
+    "config_id": "two_stage_xgb_set_b",
+    "name": "Two-Stage Classifier+Regressor (Set B + Rainfall)",
+    "feature_set": "set_b_with_rainfall",
+    "model_type": "two_stage",
+    "calibrated_threshold": 0.3,
+    "val_metrics": {
+      "mae": 1.4933,
+      "rmse": 2.741,
+      "nrmse": 0.0982,
+      "r2": 0.988,
+      "mean_signed_bias": -0.1861,
+      "max_error": 20.1883,
+      "n_samples": 978,
+      "target_mean": 27.9215,
+      "pred_mean": 27.7354
+    }
+  },
+  "two_stage_xgb_set_c": {
+    "config_id": "two_stage_xgb_set_c",
+    "name": "Two-Stage Classifier+Regressor (Set C Enriched)",
+    "feature_set": "set_c_enriched",
+    "model_type": "two_stage",
+    "calibrated_threshold": 0.2,
+    "val_metrics": {
+      "mae": 1.4607,
+      "rmse": 2.7636,
+      "nrmse": 0.099,
+      "r2": 0.9878,
+      "mean_signed_bias": -0.2461,
+      "max_error": 21.0653,
+      "n_samples": 978,
+      "target_mean": 27.9215,
+      "pred_mean": 27.6754
+    }
+  }
+}

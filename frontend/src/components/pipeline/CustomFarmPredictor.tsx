@@ -84,7 +84,7 @@ export const CustomFarmPredictor: React.FC<CustomFarmPredictorProps> = ({
   onPredictionSuccess,
 }) => {
   const [formData, setFormData] = useState<FarmerInputData>(DEFAULT_FORM_VALUES);
-  const [modelName, setModelName] = useState<'XGBoost' | 'RandomForest'>('XGBoost');
+  const [modelName, setModelName] = useState<'XGBoost'>('XGBoost');
   const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
   const [autoEtc, setAutoEtc] = useState<boolean>(true);
 
@@ -515,13 +515,14 @@ export const CustomFarmPredictor: React.FC<CustomFarmPredictorProps> = ({
               <select
                 id="custom-model-choice"
                 className="form-control"
-                value={modelName}
-                onChange={(e) => setModelName(e.target.value as 'XGBoost' | 'RandomForest')}
+                value="XGBoost"
+                disabled
+                title="Active Production Model locked to XGBoost"
+                style={{ backgroundColor: '#f0fdf4', borderColor: '#86efac', color: '#166534', fontWeight: 600 }}
               >
-                <option value="XGBoost">XGBoost (Production Primary)</option>
-                <option value="RandomForest">Random Forest (Baseline)</option>
+                <option value="XGBoost">Active Model: XGBoost (Verified Production)</option>
               </select>
-              <div className="form-hint">Model selected for inference on the backend.</div>
+              <div className="form-hint">Production model locked to XGBoost (R² = 0.9699).</div>
             </div>
           </div>
         </div>

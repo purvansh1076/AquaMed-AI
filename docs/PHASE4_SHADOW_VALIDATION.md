@@ -202,7 +202,7 @@ npm run build
 1. **Keep Shadow Mode Active Internally**:
    Shadow mode should remain enabled in backend services (`enable_shadow_mode = True`). It provides an essential sanity check for agronomic plausibility alongside legacy ML predictions without impacting the user interface or OR-Tools optimization.
 2. **Conditional User-Facing Integration**:
-   - **Do NOT silently swap** the legacy ML predictions for the deterministic baseline in the production allocation engine without stakeholder alignment.
+   - **Do NOT silently swap** the legacy ML predictions for the deterministic baseline in the production allocation engine without review and approval from irrigation authorities and users.
    - **Recommended UI Integration (Phase 5)**: In the frontend "Expert Mode" dashboard, display the deterministic estimate as a secondary "Agronomic Plausibility Benchmark" card beneath the ML prediction, with explicit tooltips explaining the FAO-56 formulation and synthetic legacy model limitations.
    - **Do NOT present agreement scores as accuracy**: When presenting comparison data to users, label differences as *"Theoretical Agronomic Variance"* rather than *"Model Accuracy"*, reiterating that no measured telemetry ground truth is available.
 

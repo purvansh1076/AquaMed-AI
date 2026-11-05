@@ -1,0 +1,116 @@
+{
+  "comparators": {
+    "naive_mean_baseline": {
+      "model_name": "Naive Mean Baseline",
+      "target_units": "m3/day",
+      "n_samples": 138,
+      "mae": 16.6262,
+      "rmse": 19.2216,
+      "nrmse": 0.8256,
+      "r2": -1.4913,
+      "max_error": 38.1536
+    },
+    "deterministic_agronomic_reference": {
+      "model_name": "Deterministic FAO-56 Reference",
+      "target_units": "m3/day",
+      "n_samples": 138,
+      "mae": 0.0,
+      "rmse": 0.0,
+      "nrmse": 0.0,
+      "r2": 1.0,
+      "max_error": 0.0
+    },
+    "diagnostic_tautological_ablation": {
+      "model_name": "Diagnostic Tautological Model (area_x_etc)",
+      "target_units": "m3/day",
+      "n_samples": 138,
+      "mae": 9.0174,
+      "rmse": 10.6647,
+      "nrmse": 0.4581,
+      "r2": 0.2331,
+      "max_error": 26.5341
+    }
+  },
+  "candidate_models": {
+    "candidate_random_forest": {
+      "model_name": "Candidate RandomForest",
+      "target_units": "m3/day",
+      "n_samples": 138,
+      "mae": 6.0109,
+      "rmse": 8.7136,
+      "nrmse": 0.3743,
+      "r2": 0.488,
+      "max_error": 27.9029,
+      "mean_signed_bias": 2.7721,
+      "mae_reduction_over_naive_pct": 63.85
+    },
+    "candidate_xgboost": {
+      "model_name": "Candidate XGBoost",
+      "target_units": "m3/day",
+      "n_samples": 138,
+      "mae": 5.4651,
+      "rmse": 7.9742,
+      "nrmse": 0.3425,
+      "r2": 0.5712,
+      "max_error": 24.6361,
+      "mean_signed_bias": 2.0728,
+      "mae_reduction_over_naive_pct": 67.13
+    }
+  },
+  "sliced_diagnostics": {
+    "by_crop": {
+      "cotton": {
+        "n_samples": 26,
+        "rf_mae": 7.2292,
+        "xgb_mae": 6.8016,
+        "target_mean": 19.6016
+      },
+      "sugarcane": {
+        "n_samples": 56,
+        "rf_mae": 4.0165,
+        "xgb_mae": 4.9014,
+        "target_mean": 22.1118
+      },
+      "wheat": {
+        "n_samples": 56,
+        "rf_mae": 7.4395,
+        "xgb_mae": 5.4083,
+        "target_mean": 26.1607
+      }
+    },
+    "by_month": {
+      "11": {
+        "n_samples": 75,
+        "rf_mae": 6.7306,
+        "xgb_mae": 5.8789,
+        "target_mean": 20.2215
+      },
+      "12": {
+        "n_samples": 63,
+        "rf_mae": 5.154,
+        "xgb_mae": 4.9726,
+        "target_mean": 26.9252
+      }
+    },
+    "by_demand_tier": {
+      "zero_demand": {
+        "n_samples": 18,
+        "rf_mae": 20.0719,
+        "xgb_mae": 18.3985,
+        "target_mean": 0.0
+      },
+      "low_demand_0_30": {
+        "n_samples": 94,
+        "rf_mae": 3.4511,
+        "xgb_mae": 3.0146,
+        "target_mean": 23.0385
+      },
+      "med_demand_30_60": {
+        "n_samples": 26,
+        "rf_mae": 5.5307,
+        "xgb_mae": 5.3707,
+        "target_mean": 40.2801
+      }
+    }
+  }
+}

@@ -1,0 +1,285 @@
+{
+  "by_crop": {
+    "cotton": {
+      "mae": 0.8246,
+      "rmse": 1.508,
+      "nrmse": 0.0716,
+      "r2": 0.9911,
+      "mean_signed_bias": -0.1528,
+      "max_error": 9.5416,
+      "n_samples": 170,
+      "target_mean": 21.0724,
+      "pred_mean": 20.9196
+    },
+    "groundnut": {
+      "mae": 0.7028,
+      "rmse": 1.3172,
+      "nrmse": 0.0758,
+      "r2": 0.9926,
+      "mean_signed_bias": 0.0717,
+      "max_error": 9.2945,
+      "n_samples": 117,
+      "target_mean": 17.3736,
+      "pred_mean": 17.4454
+    },
+    "maize": {
+      "mae": 0.9152,
+      "rmse": 1.5359,
+      "nrmse": 0.0848,
+      "r2": 0.9914,
+      "mean_signed_bias": -0.0102,
+      "max_error": 9.2616,
+      "n_samples": 107,
+      "target_mean": 18.1141,
+      "pred_mean": 18.1039
+    },
+    "soybean": {
+      "mae": 1.5067,
+      "rmse": 2.3152,
+      "nrmse": 0.1238,
+      "r2": 0.9835,
+      "mean_signed_bias": 0.1052,
+      "max_error": 9.8316,
+      "n_samples": 96,
+      "target_mean": 18.6968,
+      "pred_mean": 18.802
+    },
+    "sugarcane": {
+      "mae": 1.8596,
+      "rmse": 3.0679,
+      "nrmse": 0.0786,
+      "r2": 0.9899,
+      "mean_signed_bias": -0.4128,
+      "max_error": 23.3037,
+      "n_samples": 365,
+      "target_mean": 39.0458,
+      "pred_mean": 38.6331
+    },
+    "wheat": {
+      "mae": 1.7311,
+      "rmse": 2.6073,
+      "nrmse": 0.088,
+      "r2": 0.9582,
+      "mean_signed_bias": -1.2775,
+      "max_error": 12.7671,
+      "n_samples": 121,
+      "target_mean": 29.6381,
+      "pred_mean": 28.3606
+    }
+  },
+  "by_season": {
+    "kharif": {
+      "mae": 1.0881,
+      "rmse": 1.8776,
+      "nrmse": 0.0857,
+      "r2": 0.9909,
+      "mean_signed_bias": -0.0063,
+      "max_error": 11.2388,
+      "n_samples": 612,
+      "target_mean": 21.8993,
+      "pred_mean": 21.893
+    },
+    "rabi": {
+      "mae": 1.3692,
+      "rmse": 2.0641,
+      "nrmse": 0.075,
+      "r2": 0.9675,
+      "mean_signed_bias": -0.8523,
+      "max_error": 12.7671,
+      "n_samples": 271,
+      "target_mean": 27.5169,
+      "pred_mean": 26.6645
+    },
+    "zaid_summer": {
+      "mae": 3.4005,
+      "rmse": 4.9757,
+      "nrmse": 0.0731,
+      "r2": 0.9822,
+      "mean_signed_bias": -0.8493,
+      "max_error": 23.3037,
+      "n_samples": 93,
+      "target_mean": 68.0281,
+      "pred_mean": 67.1788
+    }
+  },
+  "by_month": {
+    "1": {
+      "mae": 1.9107,
+      "rmse": 3.1418,
+      "nrmse": 0.1082,
+      "r2": 0.9529,
+      "mean_signed_bias": -1.1884,
+      "max_error": 12.7671,
+      "n_samples": 62,
+      "target_mean": 29.0269,
+      "pred_mean": 27.8385
+    },
+    "2": {
+      "mae": 1.6954,
+      "rmse": 2.2309,
+      "nrmse": 0.0668,
+      "r2": 0.9732,
+      "mean_signed_bias": -0.8562,
+      "max_error": 5.6456,
+      "n_samples": 56,
+      "target_mean": 33.3819,
+      "pred_mean": 32.5257
+    },
+    "3": {
+      "mae": 3.5985,
+      "rmse": 4.232,
+      "nrmse": 0.0783,
+      "r2": 0.7931,
+      "mean_signed_bias": 0.9768,
+      "max_error": 9.414,
+      "n_samples": 32,
+      "target_mean": 54.0225,
+      "pred_mean": 54.9994
+    },
+    "4": {
+      "mae": 3.0269,
+      "rmse": 3.9915,
+      "nrmse": 0.0407,
+      "r2": 0.9707,
+      "mean_signed_bias": -2.4856,
+      "max_error": 11.12,
+      "n_samples": 30,
+      "target_mean": 98.0426,
+      "pred_mean": 95.557
+    },
+    "5": {
+      "mae": 3.5576,
+      "rmse": 6.3534,
+      "nrmse": 0.1189,
+      "r2": 0.9822,
+      "mean_signed_bias": -1.1508,
+      "max_error": 23.3037,
+      "n_samples": 31,
+      "target_mean": 53.4392,
+      "pred_mean": 52.2884
+    },
+    "6": {
+      "mae": 1.653,
+      "rmse": 2.3185,
+      "nrmse": 0.0706,
+      "r2": 0.9906,
+      "mean_signed_bias": 0.5077,
+      "max_error": 6.56,
+      "n_samples": 57,
+      "target_mean": 32.8599,
+      "pred_mean": 33.3675
+    },
+    "7": {
+      "mae": 0.9861,
+      "rmse": 1.5156,
+      "nrmse": 0.0703,
+      "r2": 0.9929,
+      "mean_signed_bias": -0.1471,
+      "max_error": 6.738,
+      "n_samples": 155,
+      "target_mean": 21.5711,
+      "pred_mean": 21.424
+    },
+    "8": {
+      "mae": 1.3676,
+      "rmse": 2.5224,
+      "nrmse": 0.1127,
+      "r2": 0.9869,
+      "mean_signed_bias": -0.4738,
+      "max_error": 11.2388,
+      "n_samples": 155,
+      "target_mean": 22.3791,
+      "pred_mean": 21.9053
+    },
+    "9": {
+      "mae": 0.8696,
+      "rmse": 1.4757,
+      "nrmse": 0.0818,
+      "r2": 0.9936,
+      "mean_signed_bias": 0.3353,
+      "max_error": 6.4168,
+      "n_samples": 143,
+      "target_mean": 18.0497,
+      "pred_mean": 18.385
+    },
+    "10": {
+      "mae": 0.8092,
+      "rmse": 1.3915,
+      "nrmse": 0.0664,
+      "r2": 0.9911,
+      "mean_signed_bias": 0.152,
+      "max_error": 7.9936,
+      "n_samples": 102,
+      "target_mean": 20.9411,
+      "pred_mean": 21.0931
+    },
+    "11": {
+      "mae": 0.636,
+      "rmse": 0.7877,
+      "nrmse": 0.0356,
+      "r2": 0.9737,
+      "mean_signed_bias": -0.1228,
+      "max_error": 2.0376,
+      "n_samples": 90,
+      "target_mean": 22.1509,
+      "pred_mean": 22.0281
+    },
+    "12": {
+      "mae": 1.5938,
+      "rmse": 1.8175,
+      "nrmse": 0.0638,
+      "r2": 0.9607,
+      "mean_signed_bias": -1.5603,
+      "max_error": 3.723,
+      "n_samples": 63,
+      "target_mean": 28.483,
+      "pred_mean": 26.9227
+    }
+  },
+  "by_demand_tier": {
+    "zero_demand": {
+      "mae": 0.0162,
+      "rmse": 0.24,
+      "nrmse": Infinity,
+      "r2": 0.0,
+      "mean_signed_bias": 0.0162,
+      "max_error": 3.56,
+      "n_samples": 220,
+      "target_mean": 0.0,
+      "pred_mean": 0.0162
+    },
+    "low_demand_0_30": {
+      "mae": 1.1619,
+      "rmse": 1.7077,
+      "nrmse": 0.0833,
+      "r2": 0.916,
+      "mean_signed_bias": 0.2418,
+      "max_error": 8.3801,
+      "n_samples": 368,
+      "target_mean": 20.5025,
+      "pred_mean": 20.7443
+    },
+    "med_demand_30_60": {
+      "mae": 2.1023,
+      "rmse": 2.8272,
+      "nrmse": 0.0658,
+      "r2": 0.8861,
+      "mean_signed_bias": -0.8467,
+      "max_error": 12.7671,
+      "n_samples": 323,
+      "target_mean": 42.9594,
+      "pred_mean": 42.1127
+    },
+    "high_demand_gt_60": {
+      "mae": 3.7397,
+      "rmse": 5.4729,
+      "nrmse": 0.0617,
+      "r2": 0.944,
+      "mean_signed_bias": -2.0444,
+      "max_error": 23.3037,
+      "n_samples": 65,
+      "target_mean": 88.6965,
+      "pred_mean": 86.6522
+    }
+  }
+}

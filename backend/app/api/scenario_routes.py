@@ -23,7 +23,9 @@ import logging
 import traceback
 from typing import Any, Dict
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+
+from app.api.deps import require_expert, require_farmer_or_expert
 
 from app.schemas.api_models import (
     AllocationRequest,
@@ -76,11 +78,15 @@ def _get_service() -> ScenarioService:
         500: {"model": ErrorResponse, "description": "Internal pipeline error"},
     },
 )
-def run_scenario(request: ScenarioRunRequest) -> Dict[str, Any]:
+def run_scenario(
+    request: ScenarioRunRequest,
+    identity: Dict[str, Any] = Depends(require_expert),
+) -> Dict[str, Any]:
     """
     Run the full AquaMediAI pipeline.
 
     This is the primary endpoint that orchestrates all phases.
+    Restricted to verified Agricultural Experts.
     """
     try:
         service = _get_service()
@@ -133,8 +139,11 @@ def run_scenario(request: ScenarioRunRequest) -> Dict[str, Any]:
     summary="Predict water demand for a single farmer",
     responses={500: {"model": ErrorResponse}},
 )
-def predict_single(request: PredictionRequest) -> Dict[str, Any]:
-    """Run ML prediction for a single farmer."""
+def predict_single(
+    request: PredictionRequest,
+    identity: Dict[str, Any] = Depends(require_farmer_or_expert),
+) -> Dict[str, Any]:
+    """Run ML prediction for a single farmer. Permitted for Farmers and Experts."""
     try:
         service = _get_service()
         result = service.predict_single(
@@ -174,8 +183,11 @@ def predict_single(request: PredictionRequest) -> Dict[str, Any]:
     tags=["Predictions"],
     summary="Batch predict water demand",
 )
-def predict_batch(request: PredictionBatchRequest) -> Dict[str, Any]:
-    """Run ML predictions for multiple farmers."""
+def predict_batch(
+    request: PredictionBatchRequest,
+    identity: Dict[str, Any] = Depends(require_farmer_or_expert),
+) -> Dict[str, Any]:
+    """Run ML predictions for multiple farmers. Permitted for Farmers and Experts."""
     try:
         service = _get_service()
         results = service.predict_batch(
@@ -219,8 +231,11 @@ def predict_batch(request: PredictionBatchRequest) -> Dict[str, Any]:
     tags=["Conflicts"],
     summary="Detect water-sharing conflicts",
 )
-def detect_conflicts(request: ConflictRequest) -> Dict[str, Any]:
-    """Run conflict detection on a generated scenario."""
+def detect_conflicts(
+    request: ConflictRequest,
+    identity: Dict[str, Any] = Depends(require_expert),
+) -> Dict[str, Any]:
+    """Run conflict detection on a generated scenario. Restricted to verified Agricultural Experts."""
     try:
         service = _get_service()
         return service.detect_conflicts(
@@ -243,8 +258,11 @@ def detect_conflicts(request: ConflictRequest) -> Dict[str, Any]:
     tags=["Allocation"],
     summary="Run LP water allocation",
 )
-def run_allocation(request: AllocationRequest) -> Dict[str, Any]:
-    """Run LP-based water allocation on a generated scenario."""
+def run_allocation(
+    request: AllocationRequest,
+    identity: Dict[str, Any] = Depends(require_expert),
+) -> Dict[str, Any]:
+    """Run LP-based water allocation on a generated scenario. Restricted to verified Agricultural Experts."""
     try:
         service = _get_service()
         return service.run_allocation(
@@ -267,8 +285,11 @@ def run_allocation(request: AllocationRequest) -> Dict[str, Any]:
     tags=["Negotiation"],
     summary="Run multi-agent negotiation",
 )
-def run_negotiation(request: NegotiationRequest) -> Dict[str, Any]:
-    """Run the full negotiation pipeline on a generated scenario."""
+def run_negotiation(
+    request: NegotiationRequest,
+    identity: Dict[str, Any] = Depends(require_expert),
+) -> Dict[str, Any]:
+    """Run the full negotiation pipeline on a generated scenario. Restricted to verified Agricultural Experts."""
     try:
         service = _get_service()
         return service.run_negotiation(
