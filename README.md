@@ -40,7 +40,7 @@ Agricultural water scarcity and rotational canal distribution frequently precipi
 
 ### B. Authenticated Agricultural Expert Access
 - **Government-Grade Login**: Extension officers, canal engineers, and agronomists authenticate via `/expert-login`.
-- **Default Provisioned Expert Account**: `expert@aquamedi.gov.in` (Password: `AquaExpert#2026`).
+- **Environment-Provisioned Account**: Configured securely via `EXPERT_DEFAULT_EMAIL` and `EXPERT_DEFAULT_PASSWORD` in `backend/.env` (no hardcoded credentials embedded in frontend).
 - **Security & Rate Limiting**: Passwords hashed with **PBKDF2-HMAC-SHA256** (100,000 iterations); progressive brute-force lockout after 5 consecutive failed attempts (15-minute lock).
 - **Advanced Engineering Controls**: Full access to OR-Tools GLOP solver logs, Nash bargaining rounds, TreeSHAP force plots, and manual scenario execution.
 
@@ -261,7 +261,7 @@ npm run dev
 | Role | Access URL | Credentials | Permitted Operations | Restricted Operations |
 | :--- | :--- | :--- | :--- | :--- |
 | **Farmer (Guest)** | `/` or `/welcome` | **No login required** (1-click *"Continue as Farmer"*) | View personalized farm demand, crop advisory, water quota, multilingual advice | Cannot run multi-farmer scenario simulations, edit canal capacities, or trigger optimization |
-| **Agricultural Expert** | `/expert-login` | **Username**: `expert@aquamedi.gov.in`<br>**Password**: `AquaExpert#2026` | Full system access, OR-Tools LP allocations, Nash bargaining simulations, SHAP audits | Protected behind server-side RBAC token verification |
+| **Agricultural Expert** | `/expert-login` | Configured via `backend/.env`<br>(e.g. `expert@aquamedi.gov.in`) | Full system access, OR-Tools LP allocations, Nash bargaining simulations, SHAP audits | Protected behind server-side RBAC token verification |
 
 ---
 

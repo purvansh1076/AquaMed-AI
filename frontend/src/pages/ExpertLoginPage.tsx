@@ -7,13 +7,13 @@
 
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldCheck, Lock, User, AlertCircle, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Lock, User, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useViewMode } from '../context/ViewModeContext';
 
 export const ExpertLoginPage: React.FC = () => {
-  const [identifier, setIdentifier] = useState('expert@aquamedi.gov.in');
-  const [password, setPassword] = useState('AquaExpert#2026');
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
   const { loginAsExpert, isLoading, authError, clearAuthError } = useAuth();
   const { setViewMode, t } = useViewMode();
@@ -90,16 +90,25 @@ export const ExpertLoginPage: React.FC = () => {
           </div>
         )}
 
-        {/* Official Setup Credentials Box */}
-        <div className="login-credentials-hint">
+        {/* Official Security Notice */}
+        <div
+          className="login-security-notice"
+          style={{
+            backgroundColor: '#f8fafc',
+            border: '1px solid #cbd5e1',
+            borderRadius: '6px',
+            padding: '12px 14px',
+            marginBottom: '20px',
+            fontSize: '12px',
+            color: '#475569',
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: '#002664' }}>
-            <CheckCircle2 size={14} />
-            <span>Official Extension Officer Credentials</span>
+            <ShieldCheck size={15} />
+            <span>Authorized Agricultural Personnel Only</span>
           </div>
-          <div style={{ marginTop: '4px', fontFamily: 'monospace', fontSize: '11.5px', color: '#334155' }}>
-            Email: <strong>expert@aquamedi.gov.in</strong>
-            <br />
-            Password: <strong>AquaExpert#2026</strong>
+          <div style={{ marginTop: '4px', lineHeight: '1.4' }}>
+            Access is restricted to verified extension officers and state irrigation engineers. Authenticate with your assigned government credentials.
           </div>
         </div>
 
@@ -177,3 +186,4 @@ export const ExpertLoginPage: React.FC = () => {
     </div>
   );
 };
+

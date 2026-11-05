@@ -86,7 +86,7 @@ describe('Government Entry & Role Selection Flow', () => {
     });
   });
 
-  it('renders Expert Login form with default extension officer credentials hint', () => {
+  it('renders Expert Login form with security notice and input fields', () => {
     render(
       <MemoryRouter initialEntries={['/login']}>
         <AuthProvider>
@@ -100,8 +100,7 @@ describe('Government Entry & Role Selection Flow', () => {
     expect(screen.getByText('Agricultural Expert Sign-In')).toBeInTheDocument();
     expect(screen.getByLabelText(/Username or Official Email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
-    expect(screen.getByText(/expert@aquamedi.gov.in/i)).toBeInTheDocument();
-    expect(screen.getByText(/AquaExpert#2026/i)).toBeInTheDocument();
+    expect(screen.getByText(/Authorized Agricultural Personnel Only/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Authenticate & Enter/i })).toBeInTheDocument();
   });
 
@@ -131,13 +130,16 @@ describe('Government Entry & Role Selection Flow', () => {
       </MemoryRouter>
     );
 
+    await user.type(screen.getByLabelText(/Username or Official Email/i), 'expert@aquamedi.gov.in');
+    await user.type(screen.getByLabelText(/Password/i), 'AQM-GovSec-2026!k9Xv#mP4');
+
     const submitBtn = screen.getByRole('button', { name: /Authenticate & Enter/i });
     await user.click(submitBtn);
 
     await waitFor(() => {
       expect(loginSpy).toHaveBeenCalledWith({
         username_or_email: 'expert@aquamedi.gov.in',
-        password: 'AquaExpert#2026',
+        password: 'AQM-GovSec-2026!k9Xv#mP4',
       });
     });
   });
@@ -155,6 +157,9 @@ describe('Government Entry & Role Selection Flow', () => {
         </AuthProvider>
       </MemoryRouter>
     );
+
+    await user.type(screen.getByLabelText(/Username or Official Email/i), 'unknown@domain.com');
+    await user.type(screen.getByLabelText(/Password/i), 'WrongPass123');
 
     const submitBtn = screen.getByRole('button', { name: /Authenticate & Enter/i });
     await user.click(submitBtn);

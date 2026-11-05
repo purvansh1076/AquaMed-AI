@@ -9,6 +9,7 @@ Implements:
 
 from __future__ import annotations
 
+import hmac
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -289,3 +290,4 @@ def logout_user(
     """Client clears token. Server confirms termination."""
     logger.info("Session terminated for: %s", identity.get("sub"))
     return {"status": "success", "message": "Logged out successfully."}
+

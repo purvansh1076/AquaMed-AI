@@ -91,3 +91,4 @@ class GuestSession:
             "created_at": self.created_at.isoformat(),
             "expires_at": self.expires_at.isoformat() if self.expires_at else None,
         }
+

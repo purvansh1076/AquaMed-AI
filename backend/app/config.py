@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     jwt_expire_hours: int = 8
     guest_session_expire_hours: int = 24
     expert_default_email: str = "expert@aquamedi.gov.in"
-    expert_default_password: str = "AquaExpert#2026"
+    expert_default_password: str = "AQM-GovSec-2026!k9Xv#mP4"
     expert_default_name: str = "Senior Agricultural Specialist"
     auth_rate_limit_max_attempts: int = 5
     auth_rate_limit_lockout_seconds: int = 900

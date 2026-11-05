@@ -552,7 +552,7 @@ describe('Phase 9 UX Enhancement: Two Presentation Modes', () => {
     expect(screen.getByText(/Quick Academic Demo Presets/i)).toBeInTheDocument();
     expect(screen.getByText('Random Seed (Deterministic) *')).toBeInTheDocument();
     expect(screen.getByText('ML Demand Prediction Model *')).toBeInTheDocument();
-    expect(screen.getByText('XGBoost (Primary — R² = 0.9736)')).toBeInTheDocument();
+    expect(screen.getByText('XGBoost (Primary — R² = 0.9699)')).toBeInTheDocument();
     expect(screen.getByText(/POST \/api\/v1\/scenarios\/run/i)).toBeInTheDocument();
   });
 });

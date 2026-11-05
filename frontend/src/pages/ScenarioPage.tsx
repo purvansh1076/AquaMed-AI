@@ -546,7 +546,7 @@ const ExpertScenarioConfig: React.FC = () => {
               title="Active Production Model: XGBoost"
               style={{ backgroundColor: '#f0fdf4', borderColor: '#86efac', color: '#166534', fontWeight: 600 }}
             >
-              <option value="XGBoost">XGBoost (Primary — R² = 0.9736)</option>
+              <option value="XGBoost">XGBoost (Primary — R² = 0.9699)</option>
             </select>
             <div className="form-hint">Active production model locked to verified XGBoost artifact.</div>
           </div>

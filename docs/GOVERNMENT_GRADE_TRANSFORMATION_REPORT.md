@@ -47,7 +47,7 @@ AquaMediAI is an agricultural intelligence and explainable multi-agent water-sha
 ### Initial Expert Account Provisioning
 For administrative and extension officer access:
 - **Default Official Email**: `expert@aquamedi.gov.in`
-- **Default Provisioned Password**: `AquaExpert#2026`
+- **Expert Account Provisioning**: Configured securely via `EXPERT_DEFAULT_EMAIL` and `EXPERT_DEFAULT_PASSWORD` in `backend/.env` (no hardcoded credentials exposed in client application).
 - **Configurable via**: `EXPERT_DEFAULT_EMAIL` and `EXPERT_DEFAULT_PASSWORD` in `.env`.
 
 ---
@@ -135,3 +135,4 @@ npm run dev
 - **Backend**: Containerize using existing `Dockerfile` and deploy on **Render** (Free web service) or **Railway** (low-cost starter tier).
 - **Model Storage**: Model files total ~17 MB (XGBoost 576 KB, RF 16 MB), well within free git LFS and container limits.
 - **Database**: Optional PostgreSQL on **Supabase** or **Neon** (Serverless PostgreSQL free tier) or local SQLite fallback.
+

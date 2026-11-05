@@ -18,6 +18,7 @@ import time
 import pytest
 from fastapi.testclient import TestClient
 
+from app.config import get_settings
 from app.core.security import (
     create_access_token,
     decode_access_token,
@@ -69,16 +70,17 @@ def test_farmer_guest_session_creation(client):
 
 
 def test_expert_login_success(client):
+    settings = get_settings()
     payload = {
-        "username_or_email": "expert@aquamedi.gov.in",
-        "password": "AquaExpert#2026",
+        "username_or_email": settings.expert_default_email,
+        "password": settings.expert_default_password,
     }
     res = client.post("/api/v1/auth/expert/login", json=payload)
     assert res.status_code == 200
     data = res.json()
     assert data["role"] == "expert"
     assert "access_token" in data
-    assert data["user"]["email"] == "expert@aquamedi.gov.in"
+    assert data["user"]["email"] == settings.expert_default_email
 
 
 def test_expert_login_invalid_password(client):
@@ -117,8 +119,8 @@ def test_auth_me_with_guest_and_expert(client):
 
     # Expert session
     expert_res = client.post("/api/v1/auth/expert/login", json={
-        "username_or_email": "expert@aquamedi.gov.in",
-        "password": "AquaExpert#2026",
+        "username_or_email": settings.expert_default_email,
+        "password": settings.expert_default_password,
     }).json()
     expert_token = expert_res["access_token"]
 
@@ -197,3 +199,4 @@ def test_guest_farmer_permitted_on_prediction_endpoints(client):
     assert res.status_code == 200
     assert "predicted_water_demand_m3" in res.json()
     assert res.json()["model_name"] == "XGBoost"
+

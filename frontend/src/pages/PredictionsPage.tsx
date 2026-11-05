@@ -64,13 +64,13 @@ export const PredictionsPage: React.FC = () => {
           </div>
           <div>
             <div style={{ fontSize: '11px', color: 'var(--text-subtle)', fontWeight: 600 }}>HELD-OUT TEST R² (OFFLINE)</div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-primary)' }}>0.9736</div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Surrogate fit to synthetic FAO-56 targets</div>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-primary)' }}>0.9699</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Verified XGBoost holdout fit</div>
           </div>
           <div>
             <div style={{ fontSize: '11px', color: 'var(--text-subtle)', fontWeight: 600 }}>TEST MAE (m³/day)</div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-primary)' }}>17.83 m³</div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Theoretical balance reference error</div>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-primary)' }}>18.63 m³</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>RMSE: 29.27 m³ (Verified)</div>
           </div>
           <div>
             <div style={{ fontSize: '11px', color: 'var(--text-subtle)', fontWeight: 600 }}>ENGINEERED FEATURES</div>

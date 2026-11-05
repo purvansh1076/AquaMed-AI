@@ -225,3 +225,4 @@ class LoginRateLimiter:
 
 # Default global rate limiter instance
 login_rate_limiter = LoginRateLimiter(max_attempts=5, lockout_seconds=900)
+
