@@ -819,3 +819,23 @@ class TestErrorHandling:
     def test_delete_on_health_returns_405(self, client):
         resp = client.delete("/api/v1/health")
         assert resp.status_code == 405
+
+
+class TestQuickET0Endpoint:
+    """Tests for GET /api/v1/predictions/quick-et0."""
+
+    def test_quick_et0_valid_inputs(self, client):
+        resp = client.get("/api/v1/predictions/quick-et0?temp=32.0&humidity=55.0")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "et0_mm_day" in data
+        assert data["et0_mm_day"] > 0.0
+        assert data["method"] == "FAO-56 Penman-Monteith"
+        assert "FAO Irrigation and Drainage Paper No. 56" in data["scientific_reference"]
+
+    def test_quick_et0_boundary_temp(self, client):
+        resp = client.get("/api/v1/predictions/quick-et0?temp=45.0&humidity=20.0&wind_speed=4.0")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["et0_mm_day"] > 5.0
+

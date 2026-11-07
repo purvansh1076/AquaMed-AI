@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     expert_default_name: str = "Senior Agricultural Specialist"
     auth_rate_limit_max_attempts: int = 5
     auth_rate_limit_lockout_seconds: int = 900
+    enable_dev_demo_credentials: bool = True
 
     # ── Database ───────────────────────────────────────────────────────────────
     database_url: str = (

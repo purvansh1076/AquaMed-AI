@@ -166,10 +166,18 @@ def expert_login(
     department = "Department of Agriculture & Water Resources"
     target_email = settings.expert_default_email.lower()
 
-    if identifier in {target_email, "expert", "admin", "expert@aquamedi.gov.in"}:
-        # Compare with configured expert password
+    if identifier in {target_email, "expert", "admin", "expert@aquamedi.gov.in", "admin123"}:
+        # Compare with configured expert password or prototype admin123 credentials (if dev credentials enabled)
         expected_pwd = settings.expert_default_password
-        if hmac.compare_digest(payload.password, expected_pwd):
+        if identifier == "admin123" and payload.password == "12345678":
+            if getattr(settings, "enable_dev_demo_credentials", False):
+                is_valid = True
+                target_email = "admin123@aquamedi.gov.in"
+                full_name = "Senior Agricultural Specialist (Admin)"
+                department = "Agricultural Intelligence"
+            else:
+                logger.warning("Prototype credentials rejected: enable_dev_demo_credentials is False")
+        elif hmac.compare_digest(payload.password, expected_pwd):
             is_valid = True
 
     # 3. Check database if connected
@@ -177,9 +185,12 @@ def expert_login(
         try:
             from app.database import SessionLocal
             from app.models.user import User
+            from sqlalchemy import or_
 
             with SessionLocal() as db:
-                user = db.query(User).filter(User.email == identifier).first()
+                user = db.query(User).filter(
+                    or_(User.email == identifier, User.username == identifier)
+                ).first()
                 if user and user.is_active:
                     if verify_password(payload.password, user.hashed_password):
                         is_valid = True

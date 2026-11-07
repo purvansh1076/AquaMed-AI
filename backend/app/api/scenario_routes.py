@@ -60,6 +60,53 @@ def _get_service() -> ScenarioService:
     return _service
 
 
+@router.get(
+    "/predictions/quick-et0",
+    tags=["Predictions"],
+    summary="Compute standardized FAO-56 Penman-Monteith reference ET0",
+    description="Calculates standard FAO-56 ET0 (mm/day) using Penman-Monteith physical equations.",
+)
+def compute_quick_et0(
+    temp: float,
+    humidity: float = 60.0,
+    wind_speed: float = 2.0,
+    solar_radiation: float = 18.0,
+    elevation: float = 540.0,
+    lat: float = 19.0948,
+    day_of_year: int = 180,
+) -> Dict[str, Any]:
+    from app.data.fao56_penman_monteith import calculate_fao56_et0
+
+    t_min = max(0.0, temp - 5.0)
+    t_max = temp + 5.0
+    et0 = calculate_fao56_et0(
+        lat_deg=lat,
+        day_of_year=day_of_year,
+        t_min=t_min,
+        t_max=t_max,
+        t_mean=temp,
+        rh_mean=humidity,
+        wind_2m=wind_speed,
+        rs_mj=solar_radiation,
+        elevation_m=elevation,
+    )
+    return {
+        "et0_mm_day": round(et0, 2),
+        "method": "FAO-56 Penman-Monteith",
+        "inputs": {
+            "temperature_c": temp,
+            "humidity_pct": humidity,
+            "wind_speed_ms": wind_speed,
+            "solar_radiation_mj": solar_radiation,
+            "elevation_m": elevation,
+            "latitude": lat,
+            "day_of_year": day_of_year,
+        },
+        "scientific_reference": "FAO Irrigation and Drainage Paper No. 56",
+        "disclaimer": "Physical reference evapotranspiration calculated via FAO-56 Penman-Monteith formulation.",
+    }
+
+
 # ─── Primary Endpoint ─────────────────────────────────────────────────────────
 
 @router.post(

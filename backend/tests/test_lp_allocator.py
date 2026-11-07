@@ -1114,3 +1114,28 @@ class TestConservationAndSanity:
         assert "urgency" in meta
         assert "crop_sensitivity" in meta
         assert "objective_weights" in meta
+
+
+class TestCanalConveyanceLoss:
+    """Tests for canal conveyance loss modeling in LP allocator."""
+
+    def test_conveyance_loss_limits_supply_correctly(self):
+        from app.allocation.lp_allocator import WaterAllocator
+        # Two farmers with 1000m3 demand each. Total available = 1500m3.
+        # F1 has eff = 1.0 (head-end). F2 has eff = 0.5 (tail-end, loses 50% in transit).
+        a1 = _make_agent("F1", predicted_demand=1000.0, min_water=100.0, max_water=1000.0)
+        a2 = _make_agent("F2", predicted_demand=1000.0, min_water=100.0, max_water=1000.0)
+        allocator = WaterAllocator(
+            [a1, a2],
+            available_water_m3=1500.0,
+            conveyance_efficiencies={"F1": 1.0, "F2": 0.5},
+        )
+        res = allocator.solve()
+        f1_alloc = next(a.allocated_water_m3 for a in res.allocations if a.farmer_id == "F1")
+        f2_alloc = next(a.allocated_water_m3 for a in res.allocations if a.farmer_id == "F2")
+        # Total source extraction: f1/1.0 + f2/0.5 <= 1500
+        source_water = (f1_alloc / 1.0) + (f2_alloc / 0.5)
+        assert source_water <= 1500.01
+        assert f1_alloc > 0.0
+        assert f2_alloc > 0.0
+

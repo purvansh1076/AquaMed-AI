@@ -36,14 +36,22 @@ class Base(DeclarativeBase):
 def _create_db_engine():
     """Create and return the SQLAlchemy synchronous engine."""
     settings = get_settings()
-    engine = create_engine(
-        settings.database_url,
-        pool_pre_ping=True,        # Detect stale connections
-        pool_size=5,               # Connection pool size
-        max_overflow=10,           # Extra connections under load
-        echo=settings.app_debug,  # Log SQL in debug mode
-    )
-    logger.info("Database engine created for: %s", settings.database_url.split("@")[-1])
+    url = settings.database_url
+    if url.startswith("sqlite"):
+        engine = create_engine(
+            url,
+            connect_args={"check_same_thread": False},
+            echo=settings.app_debug,
+        )
+    else:
+        engine = create_engine(
+            url,
+            pool_pre_ping=True,        # Detect stale connections
+            pool_size=5,               # Connection pool size
+            max_overflow=10,           # Extra connections under load
+            echo=settings.app_debug,  # Log SQL in debug mode
+        )
+    logger.info("Database engine created for: %s", url.split("@")[-1])
     return engine
 
 
@@ -84,15 +92,26 @@ def get_db() -> Session:
 
 # ─── Health-check helper ───────────────────────────────────────────────────────
 
+_last_db_check: tuple[float, bool] | None = None
+
+
 def check_db_connection() -> bool:
     """
-    Verify the database is reachable.
+    Verify the database is reachable with 5-second result caching.
     Returns True on success, False otherwise.
     """
+    global _last_db_check
+    import time
+    now = time.monotonic()
+    if _last_db_check is not None and (now - _last_db_check[0]) < 5.0:
+        return _last_db_check[1]
+
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
+        _last_db_check = (now, True)
         return True
     except Exception as exc:  # noqa: BLE001
-        logger.error("Database connection check failed: %s", exc)
+        logger.debug("Database connection check failed: %s", exc)
+        _last_db_check = (now, False)
         return False

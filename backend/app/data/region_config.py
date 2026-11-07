@@ -61,7 +61,7 @@ class RegionConfig:
 PREDEFINED_REGIONS: Dict[str, RegionConfig] = {
     "maharashtra_ahmednagar": RegionConfig(
         region_id="maharashtra_ahmednagar",
-        region_name="Pravara-Mula Canal Command (Ahmednagar, Central Maharashtra)",
+        region_name="Central Maharashtra Irrigation Command (Ahmednagar)",
         latitude=19.09,
         longitude=74.74,
         elevation_m=540.0,
@@ -70,7 +70,7 @@ PREDEFINED_REGIONS: Dict[str, RegionConfig] = {
         major_crops=("sugarcane", "wheat", "cotton", "soybean", "maize", "groundnut"),
         notes=(
             "Semi-arid agro-ecological zone with high canal dependency. "
-            "Pravara and Mula irrigation projects provide gravity flow canal water "
+            "Public irrigation networks provide gravity flow canal water "
             "to water user associations (WUAs)."
         ),
     ),

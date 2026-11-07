@@ -1,10 +1,10 @@
-version: "3.9"
+version: '3.8'
 
 services:
-  # ─── PostgreSQL 16 ────────────────────────────────────────────────────────
+  # ─── Relational Database ──────────────────────────────────────────────────────
   db:
     image: postgres:16-alpine
-    container_name: aquamedi_db
+    container_name: aquamedi_postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-aquamedi}
@@ -13,53 +13,46 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aquamedi} -d ${POSTGRES_DB:-aquamedi_db}"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U aquamedi -d aquamedi_db"]
+      interval: 5s
       timeout: 5s
       retries: 5
 
-  # ─── FastAPI Backend ───────────────────────────────────────────────────────
+  # ─── FastAPI Backend ─────────────────────────────────────────────────────────
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: aquamedi_backend
     restart: unless-stopped
-    env_file:
-      - ./backend/.env
-    environment:
-      # Override DATABASE_URL to use the docker service name
-      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-aquamedi}:${POSTGRES_PASSWORD:-aquamedi_secret}@db:5432/${POSTGRES_DB:-aquamedi_db}
-    ports:
-      - "8000:8000"
-    volumes:
-      # Mount data directories so model artifacts persist
-      - ./backend/data:/app/data
     depends_on:
       db:
         condition: service_healthy
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-aquamedi}:${POSTGRES_PASSWORD:-aquamedi_secret}@db:5432/${POSTGRES_DB:-aquamedi_db}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-aquamedi_production_secret_key_change_me_in_prod}
+      CORS_ORIGINS: http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173
+    ports:
+      - "8000:8000"
     command: >
       sh -c "alembic upgrade head &&
-             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+             uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4"
 
-  # ─── React Frontend (Vite dev server) ─────────────────────────────────────
-  # NOTE: Frontend scaffold is created in Phase 9.
-  # Uncomment this block once the frontend exists.
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   container_name: aquamedi_frontend
-  #   restart: unless-stopped
-  #   ports:
-  #     - "5173:5173"
-  #   environment:
-  #     VITE_API_URL: http://localhost:8000
-  #   depends_on:
-  #     - backend
+  # ─── React / Vite Frontend ───────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: aquamedi_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
 
 volumes:
-  postgres_data:
-    driver: local
+  pgdata:

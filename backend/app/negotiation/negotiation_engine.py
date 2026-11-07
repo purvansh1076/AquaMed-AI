@@ -694,6 +694,18 @@ class NegotiationEngine:
         utilization = total_allocated / self._available if self._available > 0 else 0.0
         utilization = min(1.0, max(0.0, utilization))
 
+        # Cryptographic Merkle verification certificate
+        leaves = [
+            {
+                "farmer_id": a.farmer_id,
+                "allocated_m3": round(final_allocation.get(a.farmer_id, 0.0), 2),
+                "utility": round(final_utilities.get(a.farmer_id, 0.0), 4),
+            }
+            for a in self._agents
+        ]
+        from app.core.audit_crypto import MerkleAuditTree
+        cert = MerkleAuditTree(leaves).generate_certificate(scenario_id=session.scenario_id)
+
         return Agreement(
             agreement_id=make_agreement_id(),
             session_id=session.session_id,
@@ -711,4 +723,5 @@ class NegotiationEngine:
             round_fairness_history=list(round_fairness_history),
             round_nash_history=list(round_nash_history),
             is_physically_valid=is_valid,
+            merkle_certificate=cert,
         )

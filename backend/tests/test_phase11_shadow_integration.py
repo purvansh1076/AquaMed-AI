@@ -397,7 +397,7 @@ def _sha256(path: Path) -> str:
 
 def test_all_baseline_and_production_artifacts_unmodified():
     """Mandatory safety rule: Keep all existing model artifacts and candidate hashes intact."""
-    base_dir = Path("backend/data/models")
+    base_dir = Path("backend/data/models") if Path("backend/data/models").exists() else Path("data/models")
 
     # Production models
     prod_files = ["encoders.joblib", "evaluation_results.json", "rf_model.joblib", "xgb_model.joblib"]

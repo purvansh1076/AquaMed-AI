@@ -85,16 +85,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# ─── Correlation ID Middleware ────────────────────────────────────────────────
+
+@app.middleware("http")
+async def add_correlation_id_middleware(request: Request, call_next):
+    import uuid
+    correlation_id = request.headers.get("X-Correlation-ID", str(uuid.uuid4()))
+    response = await call_next(request)
+    response.headers["X-Correlation-ID"] = correlation_id
+    return response
+
 # ─── Routers ──────────────────────────────────────────────────────────────────
 # Phase 8: FastAPI Integration Layer & Role-Based Access Control
 
 from app.api.health import router as health_router
 from app.api.scenario_routes import router as scenario_router
 from app.api.auth import router as auth_router
+from app.api.agronomy_routes import router as agronomy_router
+from app.api.spatial_routes import router as spatial_router
+from app.api.iot_routes import router as iot_router
 
 app.include_router(health_router, prefix="/api/v1", tags=["System"])
 app.include_router(auth_router, prefix="/api/v1", tags=["Authentication"])
 app.include_router(scenario_router, prefix="/api/v1", tags=["Pipeline"])
+app.include_router(agronomy_router, prefix="/api/v1", tags=["Agricultural Intelligence"])
+app.include_router(spatial_router, prefix="/api/v1", tags=["Spatial & Remote Sensing"])
+app.include_router(iot_router, prefix="/api/v1", tags=["IoT & Field Telemetry"])
 
 
 # ─── Core Endpoints ───────────────────────────────────────────────────────────

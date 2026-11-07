@@ -3,7 +3,7 @@ AquaMediAI — Reviewed & Versioned Agricultural Crop Registry
 ============================================================
 
 Provides versioned, agronomic reference data for pilot crops in Central Maharashtra
-(Ahmednagar canal command area: Pravara & Mula irrigation systems).
+(Ahmednagar canal command demonstration area).
 
 References:
 -----------
@@ -127,7 +127,7 @@ REGISTERED_CROPS: Dict[str, CropSpec] = {
         ),
         fao56_table_reference="FAO-56 Table 12: Sugarcane (Kc_ini=0.40, Kc_mid=1.25, Kc_end=0.75)",
         local_institution_reference="MPKV Rahuri Sugarcane Research Station (Suru/Pre-seasonal crops)",
-        applicability_notes="High water-intensity cash crop dominating the Pravara-Mula canal command.",
+        applicability_notes="High water-intensity cash crop dominating the canal command.",
     ),
     "cotton": CropSpec(
         crop_id="cotton",

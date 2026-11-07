@@ -248,7 +248,8 @@ def test_task3f_non_interference_with_allocations_and_negotiation():
 
 def test_task4_schema_features_and_units():
     """Verify required 21 feature schema and unit definitions."""
-    schema_path = Path("backend/data/models/candidate_v3/feature_schema.json")
+    candidate_path = Path("backend/data/models/candidate_v3/feature_schema.json")
+    schema_path = candidate_path if candidate_path.exists() else Path("data/models/candidate_v3/feature_schema.json")
     assert schema_path.exists()
     with open(schema_path, "r", encoding="utf-8") as f:
         schema = json.load(f)

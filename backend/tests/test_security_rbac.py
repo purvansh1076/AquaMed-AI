@@ -118,6 +118,7 @@ def test_auth_me_with_guest_and_expert(client):
     assert me_guest.json()["is_authenticated"] is False
 
     # Expert session
+    settings = get_settings()
     expert_res = client.post("/api/v1/auth/expert/login", json={
         "username_or_email": settings.expert_default_email,
         "password": settings.expert_default_password,
@@ -128,6 +129,27 @@ def test_auth_me_with_guest_and_expert(client):
     assert me_expert.status_code == 200
     assert me_expert.json()["role"] == "expert"
     assert me_expert.json()["is_authenticated"] is True
+
+
+def test_expert_login_prototype_credentials(client):
+    """Verify that admin123 and 12345678 work for prototype login, and bad password is rejected."""
+    # 1. Success
+    res = client.post("/api/v1/auth/expert/login", json={
+        "username_or_email": "admin123",
+        "password": "12345678",
+    })
+    assert res.status_code == 200
+    data = res.json()
+    assert data["role"] == "expert"
+    assert "access_token" in data
+    assert data["user"]["email"] == "admin123@aquamedi.gov.in"
+
+    # 2. Rejection with bad password
+    bad_res = client.post("/api/v1/auth/expert/login", json={
+        "username_or_email": "admin123",
+        "password": "wrongpassword99",
+    })
+    assert bad_res.status_code == 401
 
 
 # ─── RBAC Access Control Tests ───────────────────────────────────────────────

@@ -591,6 +591,7 @@ class Agreement:
     round_fairness_history: List[float]
     round_nash_history: List[float]
     is_physically_valid: bool
+    merkle_certificate: Optional[Dict[str, Any]] = None
     created_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
@@ -615,6 +616,7 @@ class Agreement:
             "round_fairness_history": [round(f, 4) for f in self.round_fairness_history],
             "round_nash_history": [round(n, 6) for n in self.round_nash_history],
             "is_physically_valid": self.is_physically_valid,
+            "merkle_certificate": self.merkle_certificate,
             "created_at": self.created_at,
         }
 

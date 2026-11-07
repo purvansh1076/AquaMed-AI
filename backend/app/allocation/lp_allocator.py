@@ -187,6 +187,7 @@ class WaterAllocator:
         available_water_m3: float,
         weights: Optional[ObjectiveWeights] = None,
         scenario_id: str = "unknown",
+        conveyance_efficiencies: Optional[Dict[str, float]] = None,
     ) -> None:
         if available_water_m3 < 0:
             raise ValueError(
@@ -196,6 +197,7 @@ class WaterAllocator:
         self._available = available_water_m3
         self._weights = weights or ObjectiveWeights()
         self._scenario_id = scenario_id
+        self._conveyance = conveyance_efficiencies or {}
         self._constraints = build_constraints(self._agents, self._available)
 
         logger.debug(
@@ -313,9 +315,14 @@ class WaterAllocator:
             )
             x.append(xi)
 
-        # ── Hard constraint H3: Σ x_i <= available_water ──────────────────────
+        # ── Hard constraint H3: Σ (x_i / η_i) <= available_water (with conveyance loss) ──
+        source_terms = []
+        for i, agent in enumerate(self._agents):
+            eta_i = max(0.1, min(1.0, self._conveyance.get(agent.farmer_id, 1.0)))
+            source_terms.append((1.0 / eta_i) * x[i])
+
         supply_ct = solver.Add(
-            solver.Sum(x) <= self._available,
+            solver.Sum(source_terms) <= self._available,
             name="supply_limit",
         )
 
@@ -461,8 +468,13 @@ class WaterAllocator:
             )
             x.append(xi)
 
-        # H3: total allocation <= available water
-        solver.Add(solver.Sum(x) <= self._available, name="supply_limit")
+        # H3: total allocation <= available water (with conveyance loss)
+        source_terms = []
+        for i, agent in enumerate(self._agents):
+            eta_i = max(0.1, min(1.0, self._conveyance.get(agent.farmer_id, 1.0)))
+            source_terms.append((1.0 / eta_i) * x[i])
+
+        solver.Add(solver.Sum(source_terms) <= self._available, name="supply_limit")
 
         # Soft minimum: auxiliary penalty variables p_i (NOT hard constraints)
         p: List[pywraplp.Variable] = []

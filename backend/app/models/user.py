@@ -33,6 +33,7 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    username: Mapped[Optional[str]] = mapped_column(String(100), unique=True, nullable=True, index=True)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[str] = mapped_column(String(50), default=UserRole.EXPERT.value, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
