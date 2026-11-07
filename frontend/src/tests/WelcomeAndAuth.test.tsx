@@ -1,11 +1,17 @@
 /**
  * AquaMediAI — Welcome & Authentication Integration Tests
  * ========================================================
- * Verifies:
- * 1. Government-Grade Welcome Page rendering and authority branding.
- * 2. Frictionless Farmer Access flow (guest session establishment without credentials).
- * 3. Agricultural Expert Access flow and login credentials validation.
- * 4. Locked XGBoost production model display.
+ * Verifies all 10 user flows from STEP 3:
+ * 1. Landing page opens correctly with government branding & role options.
+ * 2. Clicking Farmer Access opens the Farmer Portal.
+ * 3. Farmer Portal does not redirect to Expert Login.
+ * 4. Expert Access opens the Expert Login page.
+ * 5. Username admin123 and password 12345678 work for prototype login.
+ * 6. Incorrect credentials are rejected with structured error feedback.
+ * 7. Expert Dashboard opens after successful login.
+ * 8. Logout works correctly and clears credentials.
+ * 9. Expert-only routes are protected from unauthenticated access.
+ * 10. Refreshing the browser preserves authentication state from localStorage.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -14,9 +20,21 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider } from '../context/AuthContext';
 import { ViewModeProvider } from '../context/ViewModeContext';
+import { ScenarioProvider } from '../context/ScenarioContext';
 import { WelcomePage } from '../pages/WelcomePage';
 import { ExpertLoginPage } from '../pages/ExpertLoginPage';
+import { App } from '../App';
 import { api } from '../services/api';
+
+const renderWithProviders = (initialEntries = ['/']) => {
+  return render(
+    <MemoryRouter initialEntries={initialEntries}>
+      <ScenarioProvider>
+        <App />
+      </ScenarioProvider>
+    </MemoryRouter>
+  );
+};
 
 describe('Government Entry & Role Selection Flow', () => {
   beforeEach(() => {
@@ -24,6 +42,7 @@ describe('Government Entry & Role Selection Flow', () => {
     localStorage.clear();
   });
 
+  // FLOW 1: Landing page opens correctly
   it('renders official government-grade portal branding and both access cards', () => {
     render(
       <MemoryRouter initialEntries={['/']}>
@@ -35,28 +54,30 @@ describe('Government Entry & Role Selection Flow', () => {
       </MemoryRouter>
     );
 
-    // Title and portal prompt
-    expect(screen.getByText('Agricultural Decision Support System')).toBeInTheDocument();
-    expect(screen.getByText(/Select your portal access level to continue/i)).toBeInTheDocument();
+    // Authority banner and title
+    expect(screen.getByText(/Ministry of Agriculture & Farmers Welfare/i)).toBeInTheDocument();
+    expect(screen.getAllByText('AquaMedi AI')[0]).toBeInTheDocument();
+    expect(screen.getByText('Select Your Access Portal')).toBeInTheDocument();
 
-    // Two role cards
-    expect(screen.getByText('Farmer Access')).toBeInTheDocument();
-    expect(screen.getByText('Agricultural Expert Access')).toBeInTheDocument();
+    // Two role access cards
+    expect(screen.getByText('Farmer Portal')).toBeInTheDocument();
+    expect(screen.getByText('Expert Portal')).toBeInTheDocument();
+    expect(screen.getByText('Free Access')).toBeInTheDocument();
+    expect(screen.getByText('Authorized Personnel')).toBeInTheDocument();
 
-    // Badges
-    expect(screen.getByText(/No Credentials Required/i)).toBeInTheDocument();
-    expect(screen.getByText(/Official Government Authentication Required/i)).toBeInTheDocument();
+    // Portal entry action buttons
+    expect(screen.getByRole('button', { name: /Enter Farmer Portal/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Expert Login/i })).toBeInTheDocument();
 
-    // Buttons
-    expect(screen.getByRole('button', { name: /Continue as Farmer/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Sign In as Agricultural Expert/i })).toBeInTheDocument();
-
-    // Verified model pillar
+    // Trust pillars
     expect(screen.getByText('Verified ML Engine')).toBeInTheDocument();
-    expect(screen.getAllByText(/Production XGBoost Regressor/i)[0]).toBeInTheDocument();
+    expect(screen.getByText('Fair Multi-Agent Mediation')).toBeInTheDocument();
+    expect(screen.getByText('Physical Threshold Clamping')).toBeInTheDocument();
+    expect(screen.getByText('Server-Side RBAC')).toBeInTheDocument();
   });
 
-  it('clicking Continue as Farmer creates guest session and triggers navigation', async () => {
+  // FLOW 2 & 3: Clicking Farmer Access enters Farmer Portal without redirect to login
+  it('clicking Enter Farmer Portal establishes guest session and opens Farmer Portal', async () => {
     const user = userEvent.setup();
     const guestSpy = vi.spyOn(api, 'createGuestSession').mockResolvedValue({
       access_token: 'mock_guest_jwt_token',
@@ -68,25 +89,24 @@ describe('Government Entry & Role Selection Flow', () => {
       expires_in_seconds: 86400,
     });
 
-    render(
-      <MemoryRouter initialEntries={['/']}>
-        <AuthProvider>
-          <ViewModeProvider>
-            <WelcomePage />
-          </ViewModeProvider>
-        </AuthProvider>
-      </MemoryRouter>
-    );
+    renderWithProviders(['/']);
 
-    const farmerBtn = screen.getByRole('button', { name: /Continue as Farmer/i });
+    const farmerBtn = screen.getByRole('button', { name: /Enter Farmer Portal/i });
     await user.click(farmerBtn);
 
     await waitFor(() => {
       expect(guestSpy).toHaveBeenCalled();
     });
+
+    // Confirms user is in Farmer Portal and NOT redirected to Expert Login
+    await waitFor(() => {
+      expect(screen.queryByText('Agricultural Expert Portal')).not.toBeInTheDocument();
+      expect(screen.getAllByText(/Farmer Portal/i).length).toBeGreaterThan(0);
+    });
   });
 
-  it('renders Expert Login form with security notice and input fields', () => {
+  // FLOW 4: Expert Access opens the Expert Login page
+  it('renders Expert Login form with security notice, fields, and demo credentials', () => {
     render(
       <MemoryRouter initialEntries={['/login']}>
         <AuthProvider>
@@ -97,56 +117,60 @@ describe('Government Entry & Role Selection Flow', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Agricultural Expert Sign-In')).toBeInTheDocument();
-    expect(screen.getByLabelText(/Username or Official Email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
-    expect(screen.getByText(/Authorized Agricultural Personnel Only/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Authenticate & Enter/i })).toBeInTheDocument();
+    expect(screen.getByText('Agricultural Expert Portal')).toBeInTheDocument();
+    expect(screen.getByText(/Authorized Personnel Only/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Username \/ Official Email/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('••••••••')).toBeInTheDocument();
+    expect(screen.getByText(/Demo Credentials \(Prototype\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/admin123/)).toBeInTheDocument();
+    expect(screen.getByText(/12345678/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Secure Login/i })).toBeInTheDocument();
   });
 
-  it('submits expert login form to api.loginExpert and handles successful authentication', async () => {
+  // FLOW 5 & 7: Username admin123 and password 12345678 work and open Expert Dashboard
+  it('submits admin123 and 12345678 to api.loginExpert and handles successful authentication', async () => {
     const user = userEvent.setup();
     const loginSpy = vi.spyOn(api, 'loginExpert').mockResolvedValue({
       access_token: 'mock_expert_jwt_token',
       token_type: 'bearer',
       role: 'expert',
       user: {
-        email: 'expert@aquamedi.gov.in',
-        full_name: 'Senior Agricultural Specialist',
+        email: 'admin123@aquamedi.gov.in',
+        full_name: 'Senior Agricultural Specialist (Admin)',
         role: 'expert',
-        department: 'Department of Agriculture',
+        department: 'Agricultural Intelligence',
       },
       expires_in_seconds: 28800,
       message: 'Authentication successful',
     });
 
-    render(
-      <MemoryRouter initialEntries={['/login']}>
-        <AuthProvider>
-          <ViewModeProvider>
-            <ExpertLoginPage />
-          </ViewModeProvider>
-        </AuthProvider>
-      </MemoryRouter>
-    );
+    renderWithProviders(['/login']);
 
-    await user.type(screen.getByLabelText(/Username or Official Email/i), 'expert@aquamedi.gov.in');
-    await user.type(screen.getByLabelText(/Password/i), 'AQM-GovSec-2026!k9Xv#mP4');
+    await user.type(screen.getByLabelText(/Username \/ Official Email/i), 'admin123');
+    await user.type(screen.getByPlaceholderText('••••••••'), '12345678');
 
-    const submitBtn = screen.getByRole('button', { name: /Authenticate & Enter/i });
+    const submitBtn = screen.getByRole('button', { name: /Secure Login/i });
     await user.click(submitBtn);
 
     await waitFor(() => {
       expect(loginSpy).toHaveBeenCalledWith({
-        username_or_email: 'expert@aquamedi.gov.in',
-        password: 'AQM-GovSec-2026!k9Xv#mP4',
+        username_or_email: 'admin123',
+        password: '12345678',
       });
+    });
+
+    // Expert dashboard rendered
+    await waitFor(() => {
+      expect(screen.getAllByText('Dashboard Overview').length).toBeGreaterThan(0);
     });
   });
 
-  it('displays authentication error alert when login fails', async () => {
+  // FLOW 6: Incorrect credentials are rejected
+  it('rejects incorrect credentials and displays authentication error alert', async () => {
     const user = userEvent.setup();
-    vi.spyOn(api, 'loginExpert').mockRejectedValue(new Error('Invalid username/email or password. 4 attempt(s) remaining.'));
+    vi.spyOn(api, 'loginExpert').mockRejectedValue(
+      new Error('Invalid username/email or password. 4 attempt(s) remaining.')
+    );
 
     render(
       <MemoryRouter initialEntries={['/login']}>
@@ -158,14 +182,103 @@ describe('Government Entry & Role Selection Flow', () => {
       </MemoryRouter>
     );
 
-    await user.type(screen.getByLabelText(/Username or Official Email/i), 'unknown@domain.com');
-    await user.type(screen.getByLabelText(/Password/i), 'WrongPass123');
+    await user.type(screen.getByLabelText(/Username \/ Official Email/i), 'unknown_user');
+    await user.type(screen.getByPlaceholderText('••••••••'), 'bad_password_999');
 
-    const submitBtn = screen.getByRole('button', { name: /Authenticate & Enter/i });
+    const submitBtn = screen.getByRole('button', { name: /Secure Login/i });
     await user.click(submitBtn);
 
     await waitFor(() => {
       expect(screen.getByText(/Invalid username\/email or password/i)).toBeInTheDocument();
     });
+  });
+
+  // FLOW 5 (Offline fallback): Prototype admin123 works even if backend is unreachable
+  it('offline fallback enables admin123 / 12345678 prototype login when backend is offline', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(api, 'loginExpert').mockRejectedValue(new Error('Network error: backend offline'));
+
+    renderWithProviders(['/login']);
+
+    await user.type(screen.getByLabelText(/Username \/ Official Email/i), 'admin123');
+    await user.type(screen.getByPlaceholderText('••••••••'), '12345678');
+
+    const submitBtn = screen.getByRole('button', { name: /Secure Login/i });
+    await user.click(submitBtn);
+
+    // Navigates to overview via demo fallback session
+    await waitFor(() => {
+      expect(screen.getAllByText('Dashboard Overview').length).toBeGreaterThan(0);
+    });
+
+    const saved = JSON.parse(localStorage.getItem('aquamedi_auth_session') || '{}');
+    expect(saved.role).toBe('expert');
+    expect(saved.token).toMatch(/^demo_expert_/);
+  });
+
+  // FLOW 8: Logout works correctly
+  it('logout terminates authenticated session and clears storage', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem(
+      'aquamedi_auth_session',
+      JSON.stringify({
+        role: 'expert',
+        token: 'existing_token_abc',
+        user: { email: 'admin123@aquamedi.gov.in', full_name: 'Admin User', role: 'expert' },
+      })
+    );
+
+    renderWithProviders(['/overview']);
+
+    // Expert dashboard loaded
+    await waitFor(() => {
+      expect(screen.getAllByText('Dashboard Overview').length).toBeGreaterThan(0);
+    });
+
+    // Click logout
+    const logoutBtns = screen.getAllByRole('button', { name: /Logout/i });
+    await user.click(logoutBtns[0]);
+
+    // Redirected to Login / Portal Selection
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Secure Login/i })).toBeInTheDocument();
+    });
+
+    expect(localStorage.getItem('aquamedi_auth_session')).toBeNull();
+  });
+
+  // FLOW 9: Expert-only routes are protected
+  it('protects expert-only routes and redirects unauthenticated users to /login', async () => {
+    renderWithProviders(['/overview']);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Secure Login/i })).toBeInTheDocument();
+      expect(screen.getByText(/Authorized Personnel Only/i)).toBeInTheDocument();
+    });
+  });
+
+  // FLOW 10: Refreshing the browser preserves authentication state from localStorage
+  it('rehydrates expert authentication session from localStorage on page refresh', async () => {
+    localStorage.setItem(
+      'aquamedi_auth_session',
+      JSON.stringify({
+        role: 'expert',
+        token: 'active_valid_token_xyz',
+        user: {
+          email: 'admin123@aquamedi.gov.in',
+          full_name: 'Senior Agricultural Specialist',
+          role: 'expert',
+          department: 'Agricultural Intelligence',
+        },
+      })
+    );
+
+    renderWithProviders(['/overview']);
+
+    // Stays on expert dashboard without redirecting to login
+    await waitFor(() => {
+      expect(screen.getAllByText('Dashboard Overview').length).toBeGreaterThan(0);
+    });
+    expect(screen.queryByRole('button', { name: /Secure Login/i })).not.toBeInTheDocument();
   });
 });

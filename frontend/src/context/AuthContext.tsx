@@ -130,6 +130,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       persistSession('expert', response.access_token, response.user, null);
       return true;
     } catch (err: unknown) {
+      // Demo credential fallback for prototype in development/test environments only
+      const isDevOrTest = import.meta.env.DEV || import.meta.env.MODE === 'test';
+      if (isDevOrTest && usernameOrEmail === 'admin123' && password === '12345678') {
+        const demoToken = `demo_expert_${Date.now()}`;
+        const demoUser = {
+          email: 'admin123@aquamedi.gov.in',
+          full_name: 'Demo Expert Admin (Development)',
+          role: 'expert' as const,
+          department: 'Agricultural Intelligence',
+        };
+        persistSession('expert', demoToken, demoUser, null);
+        return true;
+      }
       const msg = err instanceof Error ? err.message : 'Invalid expert credentials';
       setAuthError(msg);
       return false;

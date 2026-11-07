@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Play,
-  Sparkles,
   AlertCircle,
   Check,
   Minus,
@@ -384,18 +383,51 @@ const ExpertScenarioConfig: React.FC = () => {
   }
 
   return (
-    <div style={{ maxWidth: '840px', margin: '0 auto' }}>
-      <div className="page-heading">
-        <h1 className="page-title">Configure & Run Mediation Scenario</h1>
-        <p className="page-description">
-          Set up synthetic agrarian conditions, choose farmer population size, and initiate the end-to-end multi-agent resolution pipeline.
-        </p>
+    <div style={{ maxWidth: '880px', margin: '0 auto', paddingBottom: '32px' }}>
+      {/* ── Government Portal Header & Notice ── */}
+      <div
+        style={{
+          background: '#ffffff',
+          border: '1px solid var(--border-default)',
+          borderLeft: '4px solid #12315B',
+          padding: '16px 20px',
+          marginBottom: '20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '12px',
+        }}
+      >
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h1 className="page-title" style={{ fontSize: '18px', fontWeight: 700, color: '#12315B', margin: 0 }}>
+              Configure &amp; Run Mediation Scenario
+            </h1>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                padding: '2px 8px',
+                borderRadius: '3px',
+                backgroundColor: '#fdf7eb',
+                color: '#C58B20',
+                border: '1px solid #f5dfb0',
+                textTransform: 'uppercase',
+              }}
+            >
+              Demonstration Data / Scenario Simulation
+            </span>
+          </div>
+          <p className="page-description" style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0' }}>
+            Water Distribution Simulator — Set up agrarian conditions, configure canal constraints, and initiate the multi-agent resolution pipeline.
+          </p>
+        </div>
       </div>
 
       {/* Preset Scenario Cards */}
-      <div className="card">
-        <div className="card-title" style={{ marginBottom: '12px' }}>
-          <Sparkles size={16} style={{ color: 'var(--color-primary)' }} />
+      <div className="card" style={{ marginBottom: '20px' }}>
+        <div className="card-title" style={{ marginBottom: '12px', fontSize: '13px', fontWeight: 700, color: '#12315B' }}>
           Quick Academic Demo Presets
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
@@ -566,6 +598,37 @@ const ExpertScenarioConfig: React.FC = () => {
               onChange={(e) => setWaterOverride(e.target.value)}
             />
             <div className="form-hint">Overrides default supply to simulate custom scarcity.</div>
+          </div>
+        </div>
+
+        {/* 4. Optimization Engine & Canal Efficiency */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '12px' }}>
+          <div className="form-group">
+            <label className="form-label">
+              Allocation Optimization Engine
+            </label>
+            <input
+              type="text"
+              className="form-control"
+              value="OR-Tools GLOP (Linear Programming) + Nash Bargaining"
+              disabled
+              style={{ backgroundColor: '#f8fafc', color: '#12315B', fontWeight: 600 }}
+            />
+            <div className="form-hint">Enforces water conservation, non-negativity, and crop minimum viability bounds.</div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">
+              Canal Conveyance Efficiency
+            </label>
+            <input
+              type="text"
+              className="form-control"
+              value="85.0% (Gravity Surface Distribution)"
+              disabled
+              style={{ backgroundColor: '#f8fafc', color: '#176B45', fontWeight: 600 }}
+            />
+            <div className="form-hint">Accounts for seepage and distributary delivery losses across reaches.</div>
           </div>
         </div>
 

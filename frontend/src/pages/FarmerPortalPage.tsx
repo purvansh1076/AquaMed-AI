@@ -63,9 +63,11 @@ const SOIL_TYPES = [
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
 interface FarmerForm {
+  farmer_name: string;
   crop_type: string;
   growth_stage: string;
   soil_type: string;
+  irrigation_method: string;
   farm_area_hectares: number;
   temperature_celsius: number;
   humidity_percent: number;
@@ -74,9 +76,25 @@ interface FarmerForm {
 
 interface PredictionDisplay {
   demand_m3: number;
+  demand_mm: number;
   model_name: string;
   warning: string | null;
   shadow_estimate_m3: number | null;
+  interval_days: number;
+  next_due_date: string;
+  water_per_irrigation_m3: number;
+  stress_status: 'Normal' | 'Moderate' | 'Critical';
+}
+
+interface AdvisoryHistoryItem {
+  id: string;
+  date: string;
+  farmer_name: string;
+  crop: string;
+  area_ha: number;
+  demand_m3: number;
+  interval_days: number;
+  stress_status: 'Normal' | 'Moderate' | 'Critical';
 }
 
 // ─── Helper: derive agronomic values from farmer inputs ───────────────────────
@@ -187,9 +205,11 @@ export const FarmerPortalPage: React.FC = () => {
   const { t } = useViewMode();
 
   const [form, setForm] = useState<FarmerForm>({
+    farmer_name: 'Ramesh Patil',
     crop_type: 'wheat',
     growth_stage: 'vegetative',
     soil_type: 'loam',
+    irrigation_method: 'furrow',
     farm_area_hectares: 2.0,
     temperature_celsius: 26,
     humidity_percent: 55,
@@ -199,6 +219,28 @@ export const FarmerPortalPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<PredictionDisplay | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<AdvisoryHistoryItem[]>([
+    {
+      id: 'REC-0941',
+      date: '05 Nov 2026',
+      farmer_name: 'Ramesh Patil',
+      crop: 'Wheat',
+      area_ha: 2.0,
+      demand_m3: 112.5,
+      interval_days: 12,
+      stress_status: 'Normal',
+    },
+    {
+      id: 'REC-0812',
+      date: '28 Oct 2026',
+      farmer_name: 'Ramesh Patil',
+      crop: 'Wheat',
+      area_ha: 2.0,
+      demand_m3: 98.0,
+      interval_days: 14,
+      stress_status: 'Normal',
+    },
+  ]);
 
   const selectedCrop = CROPS.find((c) => c.value === form.crop_type) ?? CROPS[0];
 
@@ -237,12 +279,48 @@ export const FarmerPortalPage: React.FC = () => {
         model_name: 'XGBoost',
       };
       const res = await api.predictSingle(payload);
+
+      const demandM3 = res.predicted_water_demand_m3;
+      const demandMm = Number((demandM3 / (form.farm_area_hectares * 10)).toFixed(1));
+      const intervalDays = form.crop_type === 'sugarcane' ? 10 : form.crop_type === 'cotton' ? 12 : 8;
+      const dueDate = new Date(Date.now() + intervalDays * 86400000).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+      });
+      const waterPerCycle = Number((demandM3 * intervalDays).toFixed(1));
+
+      let stressStatus: 'Normal' | 'Moderate' | 'Critical' = 'Normal';
+      if (form.temperature_celsius > 38 || (form.humidity_percent < 30 && form.rainfall_mm === 0)) {
+        stressStatus = 'Critical';
+      } else if (form.temperature_celsius > 32 || form.humidity_percent < 45) {
+        stressStatus = 'Moderate';
+      }
+
       setResult({
-        demand_m3: res.predicted_water_demand_m3,
+        demand_m3: demandM3,
+        demand_mm: demandMm,
         model_name: res.model_name,
         warning: res.warning ?? null,
         shadow_estimate_m3: res.shadow_agronomic_estimate_m3 ?? null,
+        interval_days: intervalDays,
+        next_due_date: dueDate,
+        water_per_irrigation_m3: waterPerCycle,
+        stress_status: stressStatus,
       });
+
+      setHistory((prev) => [
+        {
+          id: `REC-${Math.floor(1000 + Math.random() * 9000)}`,
+          date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+          farmer_name: form.farmer_name || 'Ramesh Patil',
+          crop: selectedCrop.label.split(' ')[0],
+          area_ha: form.farm_area_hectares,
+          demand_m3: Number(demandM3.toFixed(1)),
+          interval_days: intervalDays,
+          stress_status: stressStatus,
+        },
+        ...prev.slice(0, 4),
+      ]);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Could not reach the prediction server.';
       setError(message);
@@ -253,9 +331,11 @@ export const FarmerPortalPage: React.FC = () => {
 
   const handleReset = () => {
     setForm({
+      farmer_name: 'Ramesh Patil',
       crop_type: 'wheat',
       growth_stage: 'vegetative',
       soil_type: 'loam',
+      irrigation_method: 'furrow',
       farm_area_hectares: 2.0,
       temperature_celsius: 26,
       humidity_percent: 55,
@@ -266,63 +346,95 @@ export const FarmerPortalPage: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: '760px', margin: '0 auto', padding: '0 4px' }}>
-      {/* ── Hero Banner ── */}
+    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '0 4px 32px' }}>
+      {/* ── Formal Government Portal Banner ── */}
       <div
         style={{
-          background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-teal) 100%)',
-          borderRadius: '12px',
-          padding: '28px 32px',
-          color: '#fff',
-          marginBottom: '28px',
+          background: '#FFFFFF',
+          border: '1px solid var(--border-default)',
+          borderLeft: '4px solid #176B45',
+          borderRadius: '4px',
+          padding: '20px 24px',
+          marginBottom: '20px',
           display: 'flex',
           alignItems: 'center',
-          gap: '20px',
+          gap: '16px',
           flexWrap: 'wrap',
         }}
       >
         <div
           style={{
-            background: 'rgba(255,255,255,0.15)',
-            borderRadius: '50%',
-            width: '64px',
-            height: '64px',
+            background: '#eaf5ef',
+            borderRadius: '4px',
+            width: '48px',
+            height: '48px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            color: '#176B45',
             flexShrink: 0,
           }}
         >
-          <Droplets size={32} />
+          <Droplets size={26} />
         </div>
         <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '6px', lineHeight: 1.3 }}>
-            💧 {t('farmerPortalTitle')}
+          <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#12315B', margin: 0, lineHeight: 1.3 }}>
+            {t('farmerPortalTitle')}
           </h1>
-          <p style={{ fontSize: '14px', opacity: 0.88, lineHeight: 1.5 }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '4px 0 0', lineHeight: 1.4 }}>
             {t('farmerPortalDesc')}
           </p>
         </div>
       </div>
 
       {/* ── Prediction Form ── */}
-      <div className="card" style={{ padding: '28px 28px 24px', marginBottom: '20px' }}>
+      <div className="card" style={{ padding: '24px', marginBottom: '20px', borderRadius: '4px' }}>
         <h2
           style={{
             fontSize: '16px',
             fontWeight: 700,
-            color: 'var(--color-primary-dark)',
+            color: '#12315B',
             marginBottom: '20px',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
           }}
         >
-          <Leaf size={18} style={{ color: 'var(--color-mint)' }} />
+          <Leaf size={18} style={{ color: '#176B45' }} />
           Enter Your Farm Details
         </h2>
 
         <form onSubmit={handleSubmit} id="farmer-portal-form" noValidate>
+          {/* Farmer Name & Irrigation Method */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '8px' }}>
+            <FormField label="Farmer Name" hint="Registered farmer identifier">
+              <input
+                id="farmer-name-input"
+                type="text"
+                className="form-control"
+                value={form.farmer_name}
+                onChange={(e) => handleChange('farmer_name', e.target.value)}
+                placeholder="e.g. Ramesh Patil"
+                style={{ padding: '8px 12px', borderRadius: '3px' }}
+              />
+            </FormField>
+
+            <FormField label="Irrigation Method" hint="Application efficiency method">
+              <select
+                id="farmer-irrigation-method"
+                className="form-control"
+                value={form.irrigation_method}
+                onChange={(e) => handleChange('irrigation_method', e.target.value)}
+                style={{ padding: '8px 12px', borderRadius: '3px' }}
+              >
+                <option value="furrow">Surface Furrow Irrigation (~60% efficiency)</option>
+                <option value="drip">Drip Irrigation System (~90% efficiency)</option>
+                <option value="sprinkler">Sprinkler Irrigation System (~75% efficiency)</option>
+                <option value="flood">Border Strip / Flood (~50% efficiency)</option>
+              </select>
+            </FormField>
+          </div>
+
           {/* Crop Type — visual buttons */}
           <FormField
             label="What crop are you growing?"
@@ -607,43 +719,83 @@ export const FarmerPortalPage: React.FC = () => {
               textAlign: 'center',
               padding: '20px',
               background: '#fff',
-              borderRadius: '10px',
+              borderRadius: '4px',
               marginBottom: '20px',
-              border: '1px solid var(--status-success-border)',
+              border: '1px solid var(--border-default)',
             }}
           >
-            <div style={{ fontSize: '13px', color: 'var(--text-subtle)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
-              Estimated Daily Water Requirement
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+              Crop Water Requirement (Daily Demand)
             </div>
-            <div style={{ fontSize: '48px', fontWeight: 800, color: 'var(--color-primary)', lineHeight: 1, marginBottom: '6px' }}>
-              {result.demand_m3.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 1 })}
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '8px', marginBottom: '4px' }}>
+              <span style={{ fontSize: '42px', fontWeight: 800, color: '#176B45', lineHeight: 1 }}>
+                {result.demand_m3.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 1 })}
+              </span>
+              <span style={{ fontSize: '18px', color: 'var(--text-muted)', fontWeight: 600 }}>m³ / day</span>
             </div>
-            <div style={{ fontSize: '18px', color: 'var(--text-muted)', fontWeight: 600 }}>m³ / day</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-subtle)', marginTop: '6px' }}>
+            <div style={{ fontSize: '14px', color: '#12315B', fontWeight: 600, marginTop: '2px' }}>
+              Equivalent Depth: {result.demand_mm} mm / day
+            </div>
+            <div style={{ fontSize: '11px', color: 'var(--text-subtle)', marginTop: '4px' }}>
               Calculated by: {result.model_name} AI Model (Verified Production)
             </div>
           </div>
 
-          {/* Interpretation Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginBottom: '16px' }}>
-            <div style={{ background: '#fff', borderRadius: '8px', padding: '14px', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: '11px', color: 'var(--text-subtle)', fontWeight: 600, marginBottom: '4px' }}>PER ACRE (APPROX.)</div>
-              <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-primary-dark)' }}>
-                {(result.demand_m3 / form.farm_area_hectares / 2.47).toLocaleString(undefined, { maximumFractionDigits: 1 })}
+          {/* Advisory & Irrigation Guidance Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '12px', marginBottom: '16px' }}>
+            <div style={{ background: '#fff', borderRadius: '4px', padding: '14px', border: '1px solid var(--border-subtle)' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-subtle)', fontWeight: 600, marginBottom: '4px' }}>IRRIGATION INTERVAL</div>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: '#12315B' }}>
+                {result.interval_days} Days
               </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>m³ / day / acre</div>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Optimal cycle duration</div>
             </div>
-            <div style={{ background: '#fff', borderRadius: '8px', padding: '14px', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: '11px', color: 'var(--text-subtle)', fontWeight: 600, marginBottom: '4px' }}>WEEKLY ESTIMATE</div>
-              <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-primary-dark)' }}>
-                {(result.demand_m3 * 7).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+
+            <div style={{ background: '#fff', borderRadius: '4px', padding: '14px', border: '1px solid var(--border-subtle)' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-subtle)', fontWeight: 600, marginBottom: '4px' }}>NEXT IRRIGATION DUE</div>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: '#176B45' }}>
+                {result.next_due_date}
               </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>m³ for 7 days</div>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Estimated schedule</div>
             </div>
+
+            <div style={{ background: '#fff', borderRadius: '4px', padding: '14px', border: '1px solid var(--border-subtle)' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-subtle)', fontWeight: 600, marginBottom: '4px' }}>VOLUME PER IRRIGATION</div>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: '#12315B' }}>
+                {result.water_per_irrigation_m3} m³
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Total application per cycle</div>
+            </div>
+
+            <div style={{ background: '#fff', borderRadius: '4px', padding: '14px', border: '1px solid var(--border-subtle)' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-subtle)', fontWeight: 600, marginBottom: '4px' }}>WATER STRESS STATUS</div>
+              <div style={{ marginTop: '4px' }}>
+                {result.stress_status === 'Normal' && (
+                  <span className="status-badge-adequate">
+                    <CheckCircle2 size={12} />
+                    Normal (Adequate)
+                  </span>
+                )}
+                {result.stress_status === 'Moderate' && (
+                  <span className="status-badge-partial">
+                    <AlertCircle size={12} />
+                    Moderate Moisture Deficit
+                  </span>
+                )}
+                {result.stress_status === 'Critical' && (
+                  <span className="status-badge-shortage">
+                    <AlertCircle size={12} />
+                    Critical Stress
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Soil root-zone index</div>
+            </div>
+
             {result.shadow_estimate_m3 !== null && (
-              <div style={{ background: '#fff', borderRadius: '8px', padding: '14px', border: '1px solid var(--border-subtle)' }}>
+              <div style={{ background: '#fff', borderRadius: '4px', padding: '14px', border: '1px solid var(--border-subtle)' }}>
                 <div style={{ fontSize: '11px', color: 'var(--text-subtle)', fontWeight: 600, marginBottom: '4px' }}>FORMULA CHECK</div>
-                <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-teal)' }}>
+                <div style={{ fontSize: '20px', fontWeight: 700, color: '#176B45' }}>
                   {result.shadow_estimate_m3.toLocaleString(undefined, { maximumFractionDigits: 1 })}
                 </div>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>m³ (agronomic formula)</div>
@@ -651,25 +803,113 @@ export const FarmerPortalPage: React.FC = () => {
             )}
           </div>
 
+          {/* Weather Summary Box */}
+          <div
+            style={{
+              background: '#FFFFFF',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '4px',
+              padding: '12px 16px',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <CloudRain size={16} style={{ color: '#12315B' }} />
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#12315B' }}>Local Agro-Weather Conditions:</span>
+            </div>
+            <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: 'var(--text-muted)' }}>
+              <span>Temp: <strong>{form.temperature_celsius} °C</strong></span>
+              <span>Humidity: <strong>{form.humidity_percent}%</strong></span>
+              <span>Rainfall: <strong>{form.rainfall_mm} mm</strong></span>
+              <span>Method: <strong>{form.irrigation_method.toUpperCase()}</strong></span>
+            </div>
+          </div>
+
           {/* Warning */}
           {result.warning && (
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '10px 14px', background: 'var(--status-warning-bg)', border: '1px solid var(--status-warning-border)', borderRadius: '6px', marginBottom: '16px', fontSize: '12px', color: 'var(--status-warning)' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '10px 14px', background: 'var(--status-warning-bg)', border: '1px solid var(--status-warning-border)', borderRadius: '4px', marginBottom: '16px', fontSize: '12px', color: 'var(--status-warning)' }}>
               <AlertCircle size={14} style={{ flexShrink: 0, marginTop: '1px' }} />
               <span>{result.warning}</span>
             </div>
           )}
 
           {/* Disclaimer */}
-          <div style={{ fontSize: '11px', color: 'var(--text-subtle)', display: 'flex', alignItems: 'flex-start', gap: '6px', padding: '10px 14px', background: '#f8fafc', borderRadius: '6px', lineHeight: 1.5 }}>
+          <div style={{ fontSize: '11px', color: 'var(--text-subtle)', display: 'flex', alignItems: 'flex-start', gap: '6px', padding: '10px 14px', background: '#f8fafc', borderRadius: '4px', lineHeight: 1.5 }}>
             <Info size={13} style={{ flexShrink: 0, marginTop: '1px' }} />
             <span>
-              <strong>Note:</strong> This estimate uses an AI model trained on agronomic formulas
-              (FAO-56 Penman-Monteith method). It is a guidance tool, not a replacement for field
-              measurements. Actual needs may vary with weather, irrigation efficiency, and local conditions.
+              <strong>Note:</strong> This estimate uses an agricultural AI model trained on standard agronomic formulas
+              (FAO-56 Penman-Monteith method). It is a decision-support guidance tool, not a replacement for field-metered telemetry.
             </span>
           </div>
         </div>
       )}
+
+      {/* ── Past Advisory History Table ── */}
+      <div
+        className="card"
+        style={{
+          padding: '20px 24px',
+          marginBottom: '20px',
+          borderRadius: '4px',
+        }}
+      >
+        <div style={{ marginBottom: '14px' }}>
+          <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#12315B', margin: 0 }}>
+            Past Advisory Records &amp; Irrigation History
+          </h3>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+            Previous water estimations recorded for this farm profile
+          </div>
+        </div>
+
+        <div className="table-responsive">
+          <table className="gov-data-table" aria-label="Farmer History Table">
+            <thead>
+              <tr>
+                <th>Record ID</th>
+                <th>Date</th>
+                <th>Farmer Name</th>
+                <th>Crop</th>
+                <th style={{ textAlign: 'right' }}>Area (ha)</th>
+                <th style={{ textAlign: 'right' }}>Water Need (m³/day)</th>
+                <th style={{ textAlign: 'right' }}>Interval (Days)</th>
+                <th style={{ textAlign: 'center' }}>Stress Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {history.map((item) => (
+                <tr key={item.id}>
+                  <td style={{ fontWeight: 600, color: '#12315B' }}>{item.id}</td>
+                  <td>{item.date}</td>
+                  <td style={{ fontWeight: 600 }}>{item.farmer_name}</td>
+                  <td>{item.crop}</td>
+                  <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{item.area_ha.toFixed(1)}</td>
+                  <td style={{ textAlign: 'right', fontWeight: 600, color: '#176B45', fontVariantNumeric: 'tabular-nums' }}>
+                    {item.demand_m3} m³
+                  </td>
+                  <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{item.interval_days}</td>
+                  <td style={{ textAlign: 'center' }}>
+                    {item.stress_status === 'Normal' && (
+                      <span className="status-badge-adequate">Normal</span>
+                    )}
+                    {item.stress_status === 'Moderate' && (
+                      <span className="status-badge-partial">Moderate</span>
+                    )}
+                    {item.stress_status === 'Critical' && (
+                      <span className="status-badge-shortage">Critical</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* ── Quick Link to Scenario ── */}
       <div

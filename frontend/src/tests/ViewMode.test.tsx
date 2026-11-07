@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { ScenarioProvider } from '../context/ScenarioContext';
 import { ViewModeProvider, useViewMode } from '../context/ViewModeContext';
+import { AuthProvider } from '../context/AuthContext';
 import { Header } from '../layouts/Header';
 import { FarmerViewPage } from '../pages/FarmerViewPage';
 import { ScenarioPage } from '../pages/ScenarioPage';
@@ -277,22 +278,22 @@ describe('Phase 9 UX Enhancement: Two Presentation Modes', () => {
     expect(screen.getByTestId('current-language').textContent).toBe('gu');
   });
 
-  it('Header contains mode toggle buttons and language selector with zero voice UI', () => {
+  it('Header contains mode indicator and language selector with zero voice UI', () => {
     render(
       <MemoryRouter>
-        <ScenarioProvider>
-          <ViewModeProvider>
-            <Header />
-          </ViewModeProvider>
-        </ScenarioProvider>
+        <AuthProvider>
+          <ScenarioProvider>
+            <ViewModeProvider>
+              <Header />
+            </ViewModeProvider>
+          </ScenarioProvider>
+        </AuthProvider>
       </MemoryRouter>
     );
 
-    // Verify mode toggle buttons
-    const farmerBtn = screen.getByRole('tab', { name: /farmer view/i });
-    const expertBtn = screen.getByRole('tab', { name: /expert view/i });
-    expect(farmerBtn).toBeInTheDocument();
-    expect(expertBtn).toBeInTheDocument();
+    // Verify mode indicator badge
+    const modeBadge = screen.getByText(/Farmer Mode|Expert Mode/i);
+    expect(modeBadge).toBeInTheDocument();
 
     // Verify language selector dropdown exists
     const langSelect = screen.getByLabelText(/interface language/i);

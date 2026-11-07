@@ -259,6 +259,19 @@ describe('AquaMediAI Frontend Application Flow', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     localStorage.setItem('aquamedi_view_mode', 'expert');
+    localStorage.setItem(
+      'aquamedi_auth_session',
+      JSON.stringify({
+        role: 'expert',
+        token: 'mock_expert_token_123',
+        user: {
+          email: 'admin123@aquamedi.gov.in',
+          full_name: 'Senior Agricultural Specialist',
+          role: 'expert',
+          department: 'Agricultural Intelligence',
+        },
+      })
+    );
     vi.spyOn(api, 'getHealth').mockResolvedValue(mockHealthResponse);
   });
 
@@ -272,18 +285,18 @@ describe('AquaMediAI Frontend Application Flow', () => {
     );
 
     // Check project branding
-    expect(screen.getAllByText('AquaMediAI')[0]).toBeInTheDocument();
-    expect(screen.getByText('AI-Powered Water Mediation')).toBeInTheDocument();
+    expect(screen.getAllByText('AquaMedi AI')[0]).toBeInTheDocument();
+    expect(screen.getByText('Agricultural Expert Portal')).toBeInTheDocument();
 
     // Check navigation links exist
-    expect(screen.getByText('1. Overview')).toBeInTheDocument();
-    expect(screen.getByText('2. Scenario Config')).toBeInTheDocument();
-    expect(screen.getByText('3. ML Predictions')).toBeInTheDocument();
-    expect(screen.getByText('4. Conflict Engine')).toBeInTheDocument();
-    expect(screen.getByText('5. LP Allocation')).toBeInTheDocument();
-    expect(screen.getByText('6. Negotiation')).toBeInTheDocument();
-    expect(screen.getByText('7. Explainability')).toBeInTheDocument();
-    expect(screen.getByText('8. Final Agreement')).toBeInTheDocument();
+    expect(screen.getAllByText('Dashboard Overview').length).toBeGreaterThan(0);
+    expect(screen.getByText('Scenario Configuration')).toBeInTheDocument();
+    expect(screen.getByText('ML Predictions')).toBeInTheDocument();
+    expect(screen.getByText('Water Dispute Mediation')).toBeInTheDocument();
+    expect(screen.getByText('LP Water Allocation')).toBeInTheDocument();
+    expect(screen.getByText('Negotiation Engine')).toBeInTheDocument();
+    expect(screen.getByText('SHAP Explainability')).toBeInTheDocument();
+    expect(screen.getAllByText('Final Agreement').length).toBeGreaterThan(0);
 
     // Check live health check status
     await waitFor(() => {

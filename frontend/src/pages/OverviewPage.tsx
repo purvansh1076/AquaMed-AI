@@ -1,221 +1,807 @@
-import React from 'react';
+/**
+ * AquaMedi AI — Water Distribution Dashboard & Administrative Overview
+ * ====================================================================
+ * Formal government-style agricultural water management portal.
+ * Clean white/light backgrounds, navy (#12315B) & government green (#176B45).
+ * Replaces illustrative GIS with administrative tables and analytical charts.
+ */
+
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Users,
   Droplets,
-  TrendingDown,
-  AlertOctagon,
   Scale,
-  Handshake,
+  AlertOctagon,
   ArrowRight,
+  TrendingDown,
+  CheckCircle2,
+  AlertTriangle,
+  Download,
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
 import { useScenario } from '../context/ScenarioContext';
 import { MetricCard } from '../components/common/MetricCard';
 import { PipelineStepper } from '../components/pipeline/PipelineStepper';
 import { EmptyState } from '../components/common/EmptyState';
-import { DemandAllocationChart } from '../components/charts/DemandAllocationChart';
 import { formatWater, formatPercent, capitalize } from '../utils/formatters';
-import { Badge } from '../components/common/Badge';
+import type { FarmerAllocationResponse } from '../types/api';
+
+// Standard Indian farmer names mapped deterministically for demonstration
+const FARMER_NAMES: Record<string, string> = {
+  FARM_0001: 'Ramesh Patil',
+  FARM_0002: 'Suresh Deshmukh',
+  FARM_0003: 'Anand Shinde',
+  FARM_0004: 'Kishor Kale',
+  FARM_0005: 'Sunil Jadhav',
+  FARM_0006: 'Vikas More',
+  FARM_0007: 'Babanrao Kadam',
+  FARM_0008: 'Dnyaneshwar Pawar',
+  FARM_0009: 'Pandurang Bhosale',
+  FARM_0010: 'Ganesh Shingate',
+  FARM_0011: 'Shivaji Jagtap',
+  FARM_0012: 'Santosh Gaikwad',
+  FARM_0013: 'Rajendra Thorat',
+  FARM_0014: 'Ashok Chavan',
+  FARM_0015: 'Mahadev Raut',
+  FARM_0016: 'Nitin Sonawane',
+  FARM_0017: 'Balasaheb Tambe',
+  FARM_0018: 'Gorakh Gite',
+  FARM_0019: 'Sambhaji Kolhe',
+  FARM_0020: 'Navnath Vikhe',
+};
+
+// Demonstration sample rows if no scenario is active
+interface TableRowData {
+  farmer_id: string;
+  farmer_name: string;
+  crop: string;
+  area_ha: number;
+  requested_m3: number;
+  allocated_m3: number;
+  deficit_m3: number;
+  status: 'Adequate' | 'Partial' | 'Shortage';
+  reach: 'Head-Reach' | 'Middle-Reach' | 'Tail-Reach';
+}
+
+const SAMPLE_DEMO_ROWS: TableRowData[] = [
+  { farmer_id: 'FARM_0001', farmer_name: 'Ramesh Patil', crop: 'Sugarcane', area_ha: 3.2, requested_m3: 1850, allocated_m3: 1850, deficit_m3: 0, status: 'Adequate', reach: 'Head-Reach' },
+  { farmer_id: 'FARM_0002', farmer_name: 'Suresh Deshmukh', crop: 'Cotton', area_ha: 2.5, requested_m3: 1420, allocated_m3: 1350, deficit_m3: 70, status: 'Adequate', reach: 'Head-Reach' },
+  { farmer_id: 'FARM_0003', farmer_name: 'Anand Shinde', crop: 'Soybean', area_ha: 2.0, requested_m3: 980, allocated_m3: 820, deficit_m3: 160, status: 'Partial', reach: 'Middle-Reach' },
+  { farmer_id: 'FARM_0004', farmer_name: 'Kishor Kale', crop: 'Wheat', area_ha: 2.8, requested_m3: 1250, allocated_m3: 980, deficit_m3: 270, status: 'Partial', reach: 'Middle-Reach' },
+  { farmer_id: 'FARM_0005', farmer_name: 'Sunil Jadhav', crop: 'Maize', area_ha: 1.8, requested_m3: 860, allocated_m3: 540, deficit_m3: 320, status: 'Shortage', reach: 'Tail-Reach' },
+  { farmer_id: 'FARM_0006', farmer_name: 'Vikas More', crop: 'Groundnut', area_ha: 1.5, requested_m3: 740, allocated_m3: 410, deficit_m3: 330, status: 'Shortage', reach: 'Tail-Reach' },
+];
 
 export const OverviewPage: React.FC = () => {
   const { scenarioResult } = useScenario();
+  const [filterReach, setFilterReach] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
 
-  if (!scenarioResult) {
-    return (
-      <div>
-        <div className="page-heading">
-          <h1 className="page-title">Mediation Overview</h1>
-          <p className="page-description">
-            High-level executive dashboard for the AquaMediAI multi-agent water-sharing resolution process.
-          </p>
-        </div>
-        <PipelineStepper scenarioResult={null} />
-        <EmptyState
-          title="No Scenario Loaded"
-          description="Configure an agronomic scenario and run AquaMediAI mediation to inspect decisions, optimization results, and explainability."
-          actionText="Configure & Run Scenario"
-          actionHref="/scenario"
-        />
-      </div>
-    );
-  }
+  // Compute table data from active scenario or sample
+  const tableData: TableRowData[] = useMemo(() => {
+    if (!scenarioResult) return SAMPLE_DEMO_ROWS;
 
-  const {
-    scenario_id,
-    scenario_type,
-    n_farmers,
-    available_water_m3,
-    total_demand_m3,
-    conflicts,
-    initial_allocation,
-    negotiation,
-    final_decision,
-  } = scenarioResult;
+    const allocations: FarmerAllocationResponse[] =
+      scenarioResult.initial_allocation?.allocations || [];
 
-  const agreementStatus = negotiation?.agreement_status || scenarioResult.status;
-  const fairnessScore = final_decision?.fairness_score ?? initial_allocation?.fairness_score;
-  const avgSatisfaction = initial_allocation?.average_satisfaction;
-  const utilization = final_decision?.water_utilization ?? initial_allocation?.utilization;
+    if (allocations.length === 0) return SAMPLE_DEMO_ROWS;
+
+    return allocations.map((alloc, idx) => {
+      const fid = alloc.farmer_id;
+      const farmerName = FARMER_NAMES[fid] || `Farmer ${idx + 1}`;
+      const crop = capitalize(alloc.crop || 'Field Crop');
+
+      // Estimate area from prediction input summary if present
+      const pred = scenarioResult.predictions?.find((p) => p.farmer_id === fid);
+      const rawArea = Number(pred?.input_summary?.farm_area_hectares);
+      const area_ha = !isNaN(rawArea) && rawArea > 0 ? Number(rawArea.toFixed(1)) : Number((1.5 + (idx % 4) * 0.7).toFixed(1));
+
+      const requested_m3 = Number(alloc.predicted_demand_m3.toFixed(1));
+      const allocated_m3 = Number(alloc.allocated_water_m3.toFixed(1));
+      const deficit_m3 = Number(Math.max(0, requested_m3 - allocated_m3).toFixed(1));
+
+      let status: 'Adequate' | 'Partial' | 'Shortage' = 'Adequate';
+      if (allocated_m3 <= 0 || deficit_m3 > requested_m3 * 0.4) {
+        status = 'Shortage';
+      } else if (deficit_m3 > requested_m3 * 0.08) {
+        status = 'Partial';
+      }
+
+      // Assign canal reach based on relative index position
+      const reachPct = idx / Math.max(1, allocations.length - 1);
+      const reach: 'Head-Reach' | 'Middle-Reach' | 'Tail-Reach' =
+        reachPct <= 0.33 ? 'Head-Reach' : reachPct <= 0.66 ? 'Middle-Reach' : 'Tail-Reach';
+
+      return {
+        farmer_id: fid,
+        farmer_name: farmerName,
+        crop,
+        area_ha,
+        requested_m3,
+        allocated_m3,
+        deficit_m3,
+        status,
+        reach,
+      };
+    });
+  }, [scenarioResult]);
+
+  // Aggregate metrics
+  const totalAvailable = scenarioResult?.available_water_m3 ?? 6000;
+  const totalRequested = scenarioResult?.total_demand_m3 ?? tableData.reduce((acc, r) => acc + r.requested_m3, 0);
+  const totalAllocated = scenarioResult?.initial_allocation?.total_allocated_m3 ?? tableData.reduce((acc, r) => acc + r.allocated_m3, 0);
+  const totalDeficit = Number(Math.max(0, totalRequested - totalAllocated).toFixed(1));
+  const numFarmers = scenarioResult?.n_farmers ?? tableData.length;
+  const affectedFarmers = tableData.filter((r) => r.deficit_m3 > 0).length;
+
+  // Chart 1: Requested vs Allocated
+  const requestedVsAllocatedData = useMemo(() => {
+    return tableData.slice(0, 10).map((r) => ({
+      name: r.farmer_id,
+      farmer: r.farmer_name,
+      Requested: r.requested_m3,
+      Allocated: r.allocated_m3,
+    }));
+  }, [tableData]);
+
+  // Chart 2: Crop-wise water demand
+  const cropWiseDemandData = useMemo(() => {
+    const cropMap: Record<string, { requested: number; allocated: number }> = {};
+    tableData.forEach((r) => {
+      if (!cropMap[r.crop]) {
+        cropMap[r.crop] = { requested: 0, allocated: 0 };
+      }
+      cropMap[r.crop].requested += r.requested_m3;
+      cropMap[r.crop].allocated += r.allocated_m3;
+    });
+    return Object.entries(cropMap).map(([crop, vals]) => ({
+      crop,
+      Demand: Number(vals.requested.toFixed(1)),
+      Allocated: Number(vals.allocated.toFixed(1)),
+    }));
+  }, [tableData]);
+
+  // Chart 3: Reach allocation
+  const reachData = useMemo(() => {
+    const reaches = ['Head-Reach', 'Middle-Reach', 'Tail-Reach'] as const;
+    return reaches.map((reachName) => {
+      const subset = tableData.filter((r) => r.reach === reachName);
+      const req = subset.reduce((acc, r) => acc + r.requested_m3, 0);
+      const alloc = subset.reduce((acc, r) => acc + r.allocated_m3, 0);
+      const def = subset.reduce((acc, r) => acc + r.deficit_m3, 0);
+      return {
+        reach: reachName.replace('-Reach', ''),
+        Requested: Number(req.toFixed(1)),
+        Allocated: Number(alloc.toFixed(1)),
+        Deficit: Number(def.toFixed(1)),
+      };
+    });
+  }, [tableData]);
+
+  // Chart 4: Shortage status distribution
+  const statusPieData = useMemo(() => {
+    const adequate = tableData.filter((r) => r.status === 'Adequate').length;
+    const partial = tableData.filter((r) => r.status === 'Partial').length;
+    const shortage = tableData.filter((r) => r.status === 'Shortage').length;
+    return [
+      { name: 'Adequate', value: adequate, color: '#176B45' },
+      { name: 'Partial', value: partial, color: '#C58B20' },
+      { name: 'Shortage', value: shortage, color: '#B42318' },
+    ].filter((d) => d.value > 0);
+  }, [tableData]);
+
+  // Filtered rows for the table
+  const filteredRows = useMemo(() => {
+    return tableData.filter((r) => {
+      if (filterReach !== 'all' && r.reach !== filterReach) return false;
+      if (filterStatus !== 'all' && r.status !== filterStatus) return false;
+      return true;
+    });
+  }, [tableData, filterReach, filterStatus]);
+
+  // CSV Export for administrative reporting
+  const handleExportCSV = () => {
+    const headers = [
+      'Farmer ID',
+      'Farmer Name',
+      'Crop',
+      'Farm Area (ha)',
+      'Water Requested (m3)',
+      'Water Allocated (m3)',
+      'Water Deficit (m3)',
+      'Canal Reach',
+      'Allocation Status',
+    ];
+    const rows = filteredRows.map((r) => [
+      r.farmer_id,
+      `"${r.farmer_name}"`,
+      r.crop,
+      r.area_ha,
+      r.requested_m3,
+      r.allocated_m3,
+      r.deficit_m3,
+      r.reach,
+      r.status,
+    ]);
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `water_allocation_report_${scenarioResult?.scenario_id || 'demo'}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // If no scenario loaded, show clear empty state banner but preserve functional dashboard
+  const isDemo = !scenarioResult;
 
   return (
-    <div>
-      <div className="page-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+    <div style={{ maxWidth: '1280px', margin: '0 auto', paddingBottom: '32px' }}>
+      {/* ── Page Header: Formal Government Banner ── */}
+      <div
+        style={{
+          background: '#ffffff',
+          border: '1px solid var(--border-default)',
+          borderLeft: '4px solid #12315B',
+          padding: '16px 20px',
+          marginBottom: '20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '12px',
+        }}
+      >
         <div>
-          <h1 className="page-title">Mediation Overview</h1>
-          <p className="page-description">
-            Scenario: <strong style={{ color: 'var(--color-primary-dark)' }}>{scenario_id}</strong> ({capitalize(scenario_type)})
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h1
+              className="page-title"
+              style={{
+                fontSize: '20px',
+                fontWeight: 700,
+                color: '#12315B',
+                margin: 0,
+              }}
+            >
+              Water Distribution Dashboard
+            </h1>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                padding: '2px 8px',
+                borderRadius: '3px',
+                backgroundColor: isDemo ? '#fdf7eb' : '#eaf5ef',
+                color: isDemo ? '#C58B20' : '#176B45',
+                border: `1px solid ${isDemo ? '#f5dfb0' : '#b8e2cd'}`,
+                textTransform: 'uppercase',
+              }}
+            >
+              {isDemo ? 'Demonstration Data' : 'Live Scenario Solved'}
+            </span>
+          </div>
+          <p
+            className="page-description"
+            style={{
+              fontSize: '13px',
+              color: 'var(--text-muted)',
+              marginTop: '4px',
+              marginBottom: 0,
+            }}
+          >
+            {isDemo ? (
+              <>
+                <strong>Mediation Overview</strong> — Demonstration command area allocation summary.
+                No active scenario loaded.
+              </>
+            ) : (
+              <>
+                <strong>Mediation Overview</strong> — Scenario:{' '}
+                <strong style={{ color: '#12315B' }}>{scenarioResult.scenario_id}</strong> (
+                {capitalize(scenarioResult.scenario_type)})
+              </>
+            )}
           </p>
         </div>
-        <Link to="/scenario" className="btn btn-outline btn-sm">
-          Change Scenario
-          <ArrowRight size={14} />
-        </Link>
+
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button
+            type="button"
+            onClick={handleExportCSV}
+            className="btn btn-outline btn-sm"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: '#12315B',
+              borderColor: '#D9E0E7',
+              backgroundColor: '#FFFFFF',
+            }}
+          >
+            <Download size={14} />
+            <span>Export CSV</span>
+          </button>
+          <Link
+            to="/scenario"
+            className="btn btn-primary btn-sm"
+            style={{
+              backgroundColor: '#12315B',
+              borderColor: '#12315B',
+              color: '#FFFFFF',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <span>{isDemo ? 'Run New Scenario' : 'Change Scenario'}</span>
+            <ArrowRight size={14} />
+          </Link>
+        </div>
       </div>
 
-      {/* Pipeline Stepper */}
-      <PipelineStepper scenarioResult={scenarioResult} />
+      {/* ── Stepper ── */}
+      <PipelineStepper scenarioResult={scenarioResult || null} />
 
-      {/* KPI Cards Grid */}
-      <div className="kpi-grid">
+      {/* ── If No Scenario Loaded: Empty State Notice (Maintains Test Anchors) ── */}
+      {isDemo && (
+        <div style={{ marginBottom: '20px' }}>
+          <EmptyState
+            title="No Scenario Loaded"
+            description="Configure an agronomic scenario and run AquaMediAI mediation to inspect decisions, optimization results, and explainability."
+            actionText="Configure & Run Scenario"
+            actionHref="/scenario"
+          />
+        </div>
+      )}
+
+      {/* ── Section 1: Executive KPI Summary Cards ── */}
+      <div
+        className="kpi-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: '12px',
+          marginBottom: '20px',
+        }}
+      >
         <MetricCard
-          label="Participating Farmers"
-          value={n_farmers}
-          unit="agents"
-          footnote="Autonomous digital twins"
-          icon={<Users size={18} />}
-        />
-        <MetricCard
-          label="Available Canal Water"
-          value={formatWater(available_water_m3)}
-          footnote={`Utilization: ${formatPercent(utilization)}`}
-          icon={<Droplets size={18} />}
+          label="Total Available Water"
+          value={formatWater(totalAvailable)}
+          footnote="Command canal supply"
+          icon={<Droplets size={18} style={{ color: '#12315B' }} />}
         />
         <MetricCard
           label="Total Predicted Demand"
-          value={formatWater(total_demand_m3)}
-          footnote="Aggregated ML crop predictions"
-          icon={<TrendingDown size={18} />}
+          value={formatWater(totalRequested)}
+          footnote="Aggregated crop demand"
+          icon={<TrendingDown size={18} style={{ color: '#176B45' }} />}
         />
         <MetricCard
-          label="Conflicts Detected"
-          value={conflicts?.total_conflicts ?? 0}
-          unit="events"
-          footnote={`Highest Severity: ${capitalize(conflicts?.highest_severity || 'none')}`}
-          icon={<AlertOctagon size={18} />}
+          label="Total Allocated Water"
+          value={formatWater(totalAllocated)}
+          footnote={`Utilization: ${formatPercent(totalAllocated / Math.max(1, totalAvailable))}`}
+          icon={<Scale size={18} style={{ color: '#12315B' }} />}
         />
         <MetricCard
-          label="Avg Farmer Satisfaction"
-          value={formatPercent(avgSatisfaction)}
-          footnote={`Allocated: ${formatWater(initial_allocation?.total_allocated_m3)}`}
-          icon={<Scale size={18} />}
+          label="Estimated Water Deficit"
+          value={formatWater(totalDeficit)}
+          footnote={totalDeficit > 0 ? 'Shortfall requires mediation' : 'Zero deficit (adequate)'}
+          icon={<AlertOctagon size={18} style={{ color: totalDeficit > 0 ? '#B42318' : '#176B45' }} />}
         />
         <MetricCard
-          label="Mediation Agreement"
-          value={capitalize(agreementStatus)}
-          footnote={`Jain's Fairness: ${fairnessScore !== undefined ? fairnessScore.toFixed(3) : '—'}`}
-          icon={<Handshake size={18} />}
+          label="Participating Farmers"
+          value={numFarmers}
+          unit="farmers"
+          footnote="Water user members"
+          icon={<Users size={18} style={{ color: '#12315B' }} />}
+        />
+        <MetricCard
+          label="Affected Farmers"
+          value={affectedFarmers}
+          unit="farmers"
+          footnote={`${affectedFarmers} of ${numFarmers} face shortage`}
+          icon={<AlertTriangle size={18} style={{ color: affectedFarmers > 0 ? '#C58B20' : '#176B45' }} />}
         />
       </div>
 
-      {/* Two Column Layout: Allocation Chart & Key Insights */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: '20px' }}>
-        {/* Demand vs Allocation Chart */}
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <div className="card-title">Water Allocation by Farmer</div>
-              <div className="card-subtitle">
-                Predicted Demand vs Solved Allocation (OR-Tools GLOP LP: {initial_allocation?.allocation_method})
-              </div>
+      {/* ── Section 2: Water Allocation Table ── */}
+      <div
+        style={{
+          backgroundColor: '#ffffff',
+          border: '1px solid var(--border-default)',
+          marginBottom: '24px',
+          borderRadius: '4px',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            padding: '14px 18px',
+            backgroundColor: '#F5F7F9',
+            borderBottom: '1px solid var(--border-default)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '10px',
+          }}
+        >
+          <div>
+            <h2
+              style={{
+                fontSize: '15px',
+                fontWeight: 700,
+                color: '#12315B',
+                margin: 0,
+              }}
+            >
+              Water Allocation Register
+            </h2>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+              Farmer-by-farmer water request, solved allocation, deficit, and reach-wise status
             </div>
-            <Link to="/allocation" className="btn btn-outline btn-sm">
-              View Allocation
-            </Link>
           </div>
-          <DemandAllocationChart allocations={initial_allocation?.allocations || []} />
+
+          {/* Table Filters */}
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <label style={{ fontSize: '12px', fontWeight: 600, color: '#263445' }}>
+              Reach:
+              <select
+                value={filterReach}
+                onChange={(e) => setFilterReach(e.target.value)}
+                style={{
+                  marginLeft: '4px',
+                  padding: '4px 8px',
+                  fontSize: '12px',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: '3px',
+                  backgroundColor: '#FFFFFF',
+                }}
+              >
+                <option value="all">All Reaches</option>
+                <option value="Head-Reach">Head-Reach</option>
+                <option value="Middle-Reach">Middle-Reach</option>
+                <option value="Tail-Reach">Tail-Reach</option>
+              </select>
+            </label>
+
+            <label style={{ fontSize: '12px', fontWeight: 600, color: '#263445' }}>
+              Status:
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                style={{
+                  marginLeft: '4px',
+                  padding: '4px 8px',
+                  fontSize: '12px',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: '3px',
+                  backgroundColor: '#FFFFFF',
+                }}
+              >
+                <option value="all">All Statuses</option>
+                <option value="Adequate">Adequate</option>
+                <option value="Partial">Partial</option>
+                <option value="Shortage">Shortage</option>
+              </select>
+            </label>
+          </div>
         </div>
 
-        {/* Pipeline Summary Card */}
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <div className="card-title">Mediation Outcome Summary</div>
-              <div className="card-subtitle">Algorithmic synthesis across mediation phases</div>
+        {/* Responsive Table */}
+        <div className="table-responsive">
+          <table className="gov-data-table" aria-label="Water Allocation Table">
+            <thead>
+              <tr>
+                <th>Farmer ID</th>
+                <th>Farmer Name</th>
+                <th>Crop</th>
+                <th style={{ textAlign: 'right' }}>Farm Area (ha)</th>
+                <th style={{ textAlign: 'right' }}>Water Requested (m³)</th>
+                <th style={{ textAlign: 'right' }}>Water Allocated (m³)</th>
+                <th style={{ textAlign: 'right' }}>Water Deficit (m³)</th>
+                <th>Canal Reach</th>
+                <th style={{ textAlign: 'center' }}>Allocation Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRows.length === 0 ? (
+                <tr>
+                  <td colSpan={9} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>
+                    No records matching the selected reach or status filters.
+                  </td>
+                </tr>
+              ) : (
+                filteredRows.map((row) => (
+                  <tr key={row.farmer_id}>
+                    <td style={{ fontWeight: 600, color: '#12315B' }}>{row.farmer_id}</td>
+                    <td style={{ fontWeight: 600 }}>{row.farmer_name}</td>
+                    <td>{row.crop}</td>
+                    <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                      {row.area_ha.toFixed(1)}
+                    </td>
+                    <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                      {formatWater(row.requested_m3)}
+                    </td>
+                    <td
+                      style={{
+                        textAlign: 'right',
+                        fontWeight: 600,
+                        color: '#176B45',
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
+                      {formatWater(row.allocated_m3)}
+                    </td>
+                    <td
+                      style={{
+                        textAlign: 'right',
+                        fontWeight: 600,
+                        color: row.deficit_m3 > 0 ? '#B42318' : 'var(--text-muted)',
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
+                      {formatWater(row.deficit_m3)}
+                    </td>
+                    <td>
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          padding: '2px 6px',
+                          borderRadius: '2px',
+                          backgroundColor:
+                            row.reach === 'Head-Reach'
+                              ? '#eef3f9'
+                              : row.reach === 'Middle-Reach'
+                              ? '#f5f7f9'
+                              : '#fef3f2',
+                          color:
+                            row.reach === 'Head-Reach'
+                              ? '#12315B'
+                              : row.reach === 'Middle-Reach'
+                              ? '#4e6178'
+                              : '#B42318',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {row.reach}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      {row.status === 'Adequate' && (
+                        <span className="status-badge-adequate">
+                          <CheckCircle2 size={12} />
+                          Adequate
+                        </span>
+                      )}
+                      {row.status === 'Partial' && (
+                        <span className="status-badge-partial">
+                          <AlertTriangle size={12} />
+                          Partial
+                        </span>
+                      )}
+                      {row.status === 'Shortage' && (
+                        <span className="status-badge-shortage">
+                          <AlertOctagon size={12} />
+                          Shortage
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ── Section 3: Distribution Summary Charts (Recharts) ── */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))',
+          gap: '20px',
+          marginBottom: '24px',
+        }}
+      >
+        {/* Chart 1: Requested vs Allocated Water */}
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid var(--border-default)',
+            padding: '16px',
+            borderRadius: '4px',
+          }}
+        >
+          <div style={{ marginBottom: '12px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#12315B', margin: 0 }}>
+              Requested vs Allocated Water (by Farmer)
+            </h3>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+              Comparison of predicted crop demand vs optimized canal supply (m³)
             </div>
-            <Link to="/agreement" className="btn btn-outline btn-sm">
-              View Agreement
-            </Link>
           </div>
+          <div style={{ width: '100%', height: 260 }}>
+            <ResponsiveContainer>
+              <BarChart data={requestedVsAllocatedData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#D9E0E7" vertical={false} />
+                <XAxis dataKey="name" tick={{ fill: '#263445', fontSize: 11 }} />
+                <YAxis tick={{ fill: '#263445', fontSize: 11 }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #D9E0E7',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                  }}
+                  formatter={(val: unknown) => [`${val} m³`, '']}
+                />
+                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '6px' }} />
+                <Bar dataKey="Requested" name="Water Requested" fill="#12315B" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Allocated" name="Water Allocated" fill="#176B45" radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ padding: '12px', background: '#f8fafc', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-subtle)', fontWeight: 600 }}>
-                Status & Termination
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
-                <Badge variant={agreementStatus === 'agreed' ? 'success' : 'warning'}>
-                  {agreementStatus.replace(/_/g, ' ').toUpperCase()}
-                </Badge>
-                <span style={{ fontSize: '13px', color: 'var(--text-main)', fontWeight: 500 }}>
-                  {negotiation?.termination_reason || 'Initial optimal allocation accepted.'}
-                </span>
-              </div>
+        {/* Chart 2: Crop-Wise Water Demand */}
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid var(--border-default)',
+            padding: '16px',
+            borderRadius: '4px',
+          }}
+        >
+          <div style={{ marginBottom: '12px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#12315B', margin: 0 }}>
+              Crop-Wise Water Demand
+            </h3>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+              Total irrigation demand and allocation aggregated by crop type (m³)
             </div>
+          </div>
+          <div style={{ width: '100%', height: 260 }}>
+            <ResponsiveContainer>
+              <BarChart data={cropWiseDemandData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#D9E0E7" vertical={false} />
+                <XAxis dataKey="crop" tick={{ fill: '#263445', fontSize: 11 }} />
+                <YAxis tick={{ fill: '#263445', fontSize: 11 }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #D9E0E7',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                  }}
+                  formatter={(val: unknown) => [`${val} m³`, '']}
+                />
+                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '6px' }} />
+                <Bar dataKey="Demand" name="Crop Demand" fill="#C58B20" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Allocated" name="Allocated" fill="#176B45" radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div style={{ padding: '12px', background: '#f8fafc', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
-                <div style={{ fontSize: '11px', color: 'var(--text-subtle)', fontWeight: 600 }}>LP SOLVER STATUS</div>
-                <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-primary-dark)', marginTop: '2px' }}>
-                  {capitalize(initial_allocation?.solver_status || '—')}
-                </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                  Wall time: {initial_allocation?.solver_wall_time_ms ? `${initial_allocation.solver_wall_time_ms.toFixed(1)} ms` : '—'}
-                </div>
-              </div>
-
-              <div style={{ padding: '12px', background: '#f8fafc', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
-                <div style={{ fontSize: '11px', color: 'var(--text-subtle)', fontWeight: 600 }}>JAIN'S FAIRNESS INDEX</div>
-                <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-primary-dark)', marginTop: '2px' }}>
-                  {fairnessScore !== undefined ? fairnessScore.toFixed(4) : '—'}
-                </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                  Scale: [0, 1] (1.0 = equal satisfaction)
-                </div>
-              </div>
+        {/* Chart 3: Reach Allocation (Head vs Middle vs Tail Reach) */}
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid var(--border-default)',
+            padding: '16px',
+            borderRadius: '4px',
+          }}
+        >
+          <div style={{ marginBottom: '12px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#12315B', margin: 0 }}>
+              Canal Reach Allocation Analysis
+            </h3>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+              Head-Reach vs Middle-Reach vs Tail-Reach allocation &amp; conveyance equity (m³)
             </div>
+          </div>
+          <div style={{ width: '100%', height: 260 }}>
+            <ResponsiveContainer>
+              <BarChart data={reachData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#D9E0E7" vertical={false} />
+                <XAxis dataKey="reach" tick={{ fill: '#263445', fontSize: 11 }} />
+                <YAxis tick={{ fill: '#263445', fontSize: 11 }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #D9E0E7',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                  }}
+                  formatter={(val: unknown) => [`${val} m³`, '']}
+                />
+                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '6px' }} />
+                <Bar dataKey="Allocated" name="Allocated Water" fill="#176B45" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Deficit" name="Reach Deficit" fill="#B42318" radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
 
-            <div style={{ padding: '12px', background: '#f8fafc', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-subtle)', fontWeight: 600 }}>
-                Explainability Reason Codes
-              </div>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
-                {(scenarioResult.explanations?.all_reason_codes || []).map((code) => (
-                  <Badge key={code} variant="neutral">
-                    {code.replace(/_/g, ' ')}
-                  </Badge>
-                ))}
-              </div>
+        {/* Chart 4: Water Shortage Distribution */}
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid var(--border-default)',
+            padding: '16px',
+            borderRadius: '4px',
+          }}
+        >
+          <div style={{ marginBottom: '12px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#12315B', margin: 0 }}>
+              Water Shortage Distribution
+            </h3>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+              Proportion of farmers receiving Adequate, Partial, or Shortage supply
             </div>
-
-            <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-              <Link to="/conflicts" className="btn btn-outline btn-sm" style={{ flex: 1 }}>
-                Conflicts ({conflicts?.total_conflicts ?? 0})
-              </Link>
-              <Link to="/negotiation" className="btn btn-outline btn-sm" style={{ flex: 1 }}>
-                Negotiation ({negotiation?.n_rounds ?? 1} Rounds)
-              </Link>
-              <Link to="/explainability" className="btn btn-primary btn-sm" style={{ flex: 1 }}>
-                Explain Decisions
-              </Link>
-            </div>
+          </div>
+          <div style={{ width: '100%', height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Pie
+                  data={statusPieData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  innerRadius={45}
+                  dataKey="value"
+                  label={({ name, percent }: { name?: string; percent?: number }) =>
+                    `${name || ''}: ${((percent || 0) * 100).toFixed(0)}%`
+                  }
+                  labelLine={false}
+                >
+                  {statusPieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value: unknown, name: unknown) => [`${value} Farmers`, `${name}`]}
+                />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      {/* Academic synthetic disclaimer */}
-      <div className="alert alert-disclaimer" style={{ marginTop: '20px' }}>
-        <strong>Academic Demonstration Notice:</strong> {scenarioResult.explanations?.data_disclaimer ||
-          'All agronomic and dispute mediation data in this system is synthetically generated for academic demonstration purposes.'}
+      {/* ── Section 4: Formal Government Notice & Audit Footer ── */}
+      <div
+        style={{
+          background: '#ffffff',
+          border: '1px solid var(--border-default)',
+          borderLeft: '4px solid #176B45',
+          padding: '14px 18px',
+          fontSize: '12px',
+          color: 'var(--text-muted)',
+          lineHeight: '1.6',
+        }}
+      >
+        <strong style={{ color: '#12315B' }}>Administrative &amp; Scientific Notice:</strong> Water
+        allocations are computed deterministically using standard FAO-56 crop evapotranspiration formulas
+        and OR-Tools Linear Programming (GLOP). All figures represent simulated water demand and
+        administrative distribution within the canal command area for mediation and decision support.
       </div>
     </div>
   );
