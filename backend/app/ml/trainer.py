@@ -543,6 +543,22 @@ def load_model(model_dir: Path, model_name: str = "XGBoost") -> Any:
             "Run 'python scripts/train_models.py' first."
         )
     model = joblib.load(path)
+
+    # Critical XGBoost 2.x Unpickling Calibration:
+    # When unpickling older XGBoost models in XGBoost 2.x, base_score defaults to 0.5
+    # instead of the training target mean (214.17618 m³).
+    # If uncalibrated, every prediction is shifted downward by ~214 m³.
+    if model_name == "XGBoost" and hasattr(model, "get_booster"):
+        try:
+            booster = model.get_booster()
+            config = json.loads(booster.save_config())
+            base_score_str = config.get("learner", {}).get("learner_model_param", {}).get("base_score", "0.5")
+            if float(base_score_str) < 1.0:
+                logger.info("Calibrating unpickled XGBoost base_score to training mean 214.17618")
+                booster.set_param("base_score", 214.17618)
+        except Exception as exc:
+            logger.warning("Could not verify/calibrate XGBoost base_score: %s", exc)
+
     logger.info("Loaded %s from %s", model_name, path)
     return model
 

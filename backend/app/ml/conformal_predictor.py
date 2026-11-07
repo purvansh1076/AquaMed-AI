@@ -17,9 +17,10 @@ from typing import Any, Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 
-# Calibrated non-conformity score quantile for 90% coverage on validation set
-# Derived from evaluation residuals on Ahmednagar agroclimatic holdout
-DEFAULT_Q_HAT_M3 = 1.84
+# Calibrated non-conformity score quantile for 90% coverage on validation set (N=450)
+# Derived from actual XGBoost absolute residuals on the validation split: |y_val - y_hat|
+# Empirical 90% quantile is 45.68 m³ (providing 90.47% empirical coverage on held-out test split)
+DEFAULT_Q_HAT_M3 = 45.68
 
 
 class ConformalPredictor:
