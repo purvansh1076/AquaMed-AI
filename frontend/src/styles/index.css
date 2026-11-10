@@ -124,6 +124,112 @@ html, body {
   flex-direction: column;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   user-select: none;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-sidebar.collapsed {
+  width: 72px !important;
+  min-width: 72px !important;
+  max-width: 72px !important;
+}
+
+.app-sidebar.expanded {
+  width: 260px;
+  min-width: 260px;
+  max-width: 260px;
+}
+
+/* Tooltips in Collapsed Sidebar Rail */
+.sidebar-nav-item-wrap {
+  position: relative;
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
+.sidebar-tooltip {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 12px;
+  background-color: #0d2342;
+  color: #ffffff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  z-index: 1050;
+}
+
+.sidebar-tooltip::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent #0d2342 transparent transparent;
+}
+
+.sidebar-nav-item-wrap:hover .sidebar-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Sidebar Toggle Buttons */
+.sidebar-collapse-btn:hover,
+.header-sidebar-toggle-btn:hover,
+.sidebar-toggle-btn-compact:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+.header-sidebar-toggle-btn:hover {
+  background-color: #eef3f9 !important;
+  border-color: #12315B !important;
+}
+
+/* Mobile off-canvas drawer */
+@media (max-width: 768px) {
+  .app-sidebar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1000;
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
+    transform: translateX(-100%);
+    box-shadow: none;
+  }
+
+  .app-sidebar.mobile-open {
+    transform: translateX(0) !important;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5) !important;
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(18, 49, 91, 0.55);
+    backdrop-filter: blur(2px);
+    z-index: 999;
+    animation: fadeIn 0.15s ease;
+  }
 }
 
 .sidebar-brand {

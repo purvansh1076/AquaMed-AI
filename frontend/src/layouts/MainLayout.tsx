@@ -6,7 +6,7 @@
  * - Expert routes: Sidebar + Header (standard app shell)
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
 import { Droplet, Sprout, Handshake, Languages, ArrowLeft } from 'lucide-react';
 import { Sidebar } from './Sidebar';
@@ -20,9 +20,56 @@ import type { Language } from '../i18n/translations';
 
 export const MainLayout: React.FC = () => {
   const { healthStatus, error, clearError } = useScenario();
-  const { viewMode, language, setLanguage, t } = useViewMode();
+  const { viewMode, setViewMode, language, setLanguage, t } = useViewMode();
   const { isAuthenticated } = useAuth();
   const location = useLocation();
+
+  // Sidebar interactive state (persisted across sessions)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('aquamedi_sidebar_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [isMobileOpen, setIsMobileOpen] = useState<boolean>(false);
+
+  // Toggle handlers supporting Desktop (collapse rail) and Mobile (off-canvas drawer)
+  const handleToggleSidebar = () => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      setIsMobileOpen((prev) => !prev);
+    } else {
+      setIsSidebarCollapsed((prev) => {
+        const next = !prev;
+        try {
+          localStorage.setItem('aquamedi_sidebar_collapsed', String(next));
+        } catch {
+          // ignore
+        }
+        return next;
+      });
+    }
+  };
+
+  const handleCloseMobile = () => {
+    setIsMobileOpen(false);
+  };
+
+  // Keyboard accessibility: Escape key closes mobile drawer
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMobileOpen) {
+        setIsMobileOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobileOpen]);
+
+  // Route change automatically dismisses mobile navigation drawer
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [location.pathname]);
 
   // Determine if we're on a farmer-specific route
   const isFarmerRoute =
@@ -39,7 +86,17 @@ export const MainLayout: React.FC = () => {
     location.pathname === '/negotiation' ||
     location.pathname === '/explainability' ||
     location.pathname === '/agreement' ||
+    location.pathname === '/crop-health' ||
+    location.pathname === '/irrigation-advisory' ||
+    location.pathname === '/reports' ||
     location.pathname === '/debug';
+
+  // Ensure Expert Mode strictly defaults to English when navigating to expert routes
+  useEffect(() => {
+    if (isExpertRoute && viewMode !== 'expert') {
+      setViewMode('expert');
+    }
+  }, [isExpertRoute, viewMode, setViewMode]);
 
   const isFarmer = isFarmerRoute || (!isExpertRoute && viewMode === 'farmer' && !isAuthenticated);
 
@@ -167,11 +224,28 @@ export const MainLayout: React.FC = () => {
 
   // ── Expert Layout (sidebar + header) ────────────────────────────────────
   return (
-    <div className="app-layout expert-layout">
-      <Sidebar />
+    <div className={`app-layout expert-layout ${isSidebarCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded'}`}>
+      {/* Mobile Drawer Backdrop */}
+      {isMobileOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={handleCloseMobile}
+          aria-hidden="true"
+        />
+      )}
+
+      <Sidebar
+        collapsed={isSidebarCollapsed}
+        onToggleCollapse={handleToggleSidebar}
+        mobileOpen={isMobileOpen}
+        onCloseMobile={handleCloseMobile}
+      />
 
       <div className="app-main">
-        <Header />
+        <Header
+          isSidebarCollapsed={isSidebarCollapsed}
+          onToggleSidebar={handleToggleSidebar}
+        />
         <main className="app-content">
           <div className="content-container">
             {healthStatus === 'offline' && (

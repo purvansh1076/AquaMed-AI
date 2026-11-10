@@ -17,6 +17,7 @@ const ViewModeContext = createContext<ViewModeContextType | undefined>(undefined
 
 const VIEW_MODE_STORAGE_KEY = 'aquamedi_view_mode';
 const LANGUAGE_STORAGE_KEY = 'aquamedi_language';
+const EXPERT_LANGUAGE_STORAGE_KEY = 'aquamedi_expert_language';
 
 export const ViewModeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [viewMode, setViewModeState] = useState<ViewMode>(() => {
@@ -34,6 +35,15 @@ export const ViewModeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const [language, setLanguageState] = useState<Language>(() => {
     try {
+      const savedMode = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+      // Expert Mode strictly defaults to English on fresh load
+      if (savedMode === 'expert') {
+        const savedExpertLang = localStorage.getItem(EXPERT_LANGUAGE_STORAGE_KEY);
+        if (savedExpertLang === 'en' || savedExpertLang === 'hi' || savedExpertLang === 'gu' || savedExpertLang === 'mr') {
+          return savedExpertLang;
+        }
+        return 'en';
+      }
       const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
       if (saved === 'en' || saved === 'hi' || saved === 'gu' || saved === 'mr') {
         return saved;
@@ -48,6 +58,16 @@ export const ViewModeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const setViewMode = (mode: ViewMode) => {
     setViewModeState(mode);
+    if (mode === 'expert') {
+      // Entering Expert Mode automatically defaults language to English ('en')
+      setLanguageState('en');
+      try {
+        localStorage.setItem(EXPERT_LANGUAGE_STORAGE_KEY, 'en');
+        localStorage.setItem(LANGUAGE_STORAGE_KEY, 'en');
+      } catch {
+        // ignore
+      }
+    }
     try {
       localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
     } catch {
@@ -58,6 +78,9 @@ export const ViewModeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     try {
+      if (viewMode === 'expert') {
+        localStorage.setItem(EXPERT_LANGUAGE_STORAGE_KEY, lang);
+      }
       localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
     } catch {
       // ignore

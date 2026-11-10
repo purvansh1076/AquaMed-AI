@@ -13,7 +13,7 @@
 
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { RefreshCw, Languages, LogOut, User } from 'lucide-react';
+import { RefreshCw, Languages, LogOut, User, Menu, PanelLeftClose } from 'lucide-react';
 import { useScenario } from '../context/ScenarioContext';
 import { useViewMode } from '../context/ViewModeContext';
 import { useAuth } from '../context/AuthContext';
@@ -36,7 +36,12 @@ const ROUTE_LABELS: Record<string, string> = {
   '/farmer/portal':  'Farmer Portal',
 };
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  isSidebarCollapsed?: boolean;
+  onToggleSidebar?: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ isSidebarCollapsed = false, onToggleSidebar }) => {
   const { health, healthStatus, checkHealth } = useScenario();
   const { viewMode, language, setLanguage, t } = useViewMode();
   const { logout, isAuthenticated, user } = useAuth();
@@ -67,7 +72,34 @@ export const Header: React.FC = () => {
       }}
     >
       {/* ── Left: Portal Identity & Breadcrumb ── */}
-      <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        {onToggleSidebar && (
+          <button
+            type="button"
+            onClick={onToggleSidebar}
+            id="header-sidebar-toggle-btn"
+            className="header-sidebar-toggle-btn"
+            aria-label={isSidebarCollapsed ? 'Expand sidebar navigation' : 'Collapse sidebar navigation'}
+            aria-expanded={!isSidebarCollapsed}
+            title={isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '32px',
+              height: '32px',
+              padding: 0,
+              border: '1px solid #D9E0E7',
+              borderRadius: '3px',
+              backgroundColor: '#FFFFFF',
+              color: '#12315B',
+              cursor: 'pointer',
+              transition: 'background-color 0.15s ease, border-color 0.15s ease',
+            }}
+          >
+            {isSidebarCollapsed ? <Menu size={16} /> : <PanelLeftClose size={16} />}
+          </button>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span
