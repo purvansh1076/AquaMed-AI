@@ -63,7 +63,7 @@ const FARMER_NAMES: Record<string, string> = {
   FARM_0020: 'Navnath Vikhe',
 };
 
-// Demonstration sample rows if no scenario is active
+// Table row data structure derived from executed scenario allocations
 interface TableRowData {
   farmer_id: string;
   farmer_name: string;
@@ -76,28 +76,19 @@ interface TableRowData {
   reach: 'Head-Reach' | 'Middle-Reach' | 'Tail-Reach';
 }
 
-const SAMPLE_DEMO_ROWS: TableRowData[] = [
-  { farmer_id: 'FARM_0001', farmer_name: 'Ramesh Patil', crop: 'Sugarcane', area_ha: 3.2, requested_m3: 1850, allocated_m3: 1850, deficit_m3: 0, status: 'Adequate', reach: 'Head-Reach' },
-  { farmer_id: 'FARM_0002', farmer_name: 'Suresh Deshmukh', crop: 'Cotton', area_ha: 2.5, requested_m3: 1420, allocated_m3: 1350, deficit_m3: 70, status: 'Adequate', reach: 'Head-Reach' },
-  { farmer_id: 'FARM_0003', farmer_name: 'Anand Shinde', crop: 'Soybean', area_ha: 2.0, requested_m3: 980, allocated_m3: 820, deficit_m3: 160, status: 'Partial', reach: 'Middle-Reach' },
-  { farmer_id: 'FARM_0004', farmer_name: 'Kishor Kale', crop: 'Wheat', area_ha: 2.8, requested_m3: 1250, allocated_m3: 980, deficit_m3: 270, status: 'Partial', reach: 'Middle-Reach' },
-  { farmer_id: 'FARM_0005', farmer_name: 'Sunil Jadhav', crop: 'Maize', area_ha: 1.8, requested_m3: 860, allocated_m3: 540, deficit_m3: 320, status: 'Shortage', reach: 'Tail-Reach' },
-  { farmer_id: 'FARM_0006', farmer_name: 'Vikas More', crop: 'Groundnut', area_ha: 1.5, requested_m3: 740, allocated_m3: 410, deficit_m3: 330, status: 'Shortage', reach: 'Tail-Reach' },
-];
-
 export const OverviewPage: React.FC = () => {
   const { scenarioResult } = useScenario();
   const [filterReach, setFilterReach] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
-  // Compute table data from active scenario or sample
+  // Extract allocations list from active scenario result
+  const allocations: FarmerAllocationResponse[] = useMemo(() => {
+    return scenarioResult?.initial_allocation?.allocations || [];
+  }, [scenarioResult]);
+
+  // Compute table data strictly from active scenario; returns empty array when no scenario is loaded
   const tableData: TableRowData[] = useMemo(() => {
-    if (!scenarioResult) return SAMPLE_DEMO_ROWS;
-
-    const allocations: FarmerAllocationResponse[] =
-      scenarioResult.initial_allocation?.allocations || [];
-
-    if (allocations.length === 0) return SAMPLE_DEMO_ROWS;
+    if (!scenarioResult || allocations.length === 0) return [];
 
     return allocations.map((alloc, idx) => {
       const fid = alloc.farmer_id;
@@ -137,28 +128,30 @@ export const OverviewPage: React.FC = () => {
         reach,
       };
     });
-  }, [scenarioResult]);
+  }, [scenarioResult, allocations]);
 
-  // Aggregate metrics
-  const totalAvailable = scenarioResult?.available_water_m3 ?? 6000;
-  const totalRequested = scenarioResult?.total_demand_m3 ?? tableData.reduce((acc, r) => acc + r.requested_m3, 0);
-  const totalAllocated = scenarioResult?.initial_allocation?.total_allocated_m3 ?? tableData.reduce((acc, r) => acc + r.allocated_m3, 0);
+  // Real operational aggregate metrics from executed scenario
+  const totalAvailable = scenarioResult?.available_water_m3 ?? 0;
+  const totalRequested = scenarioResult?.total_demand_m3 ?? 0;
+  const totalAllocated = scenarioResult?.initial_allocation?.total_allocated_m3 ?? 0;
   const totalDeficit = Number(Math.max(0, totalRequested - totalAllocated).toFixed(1));
-  const numFarmers = scenarioResult?.n_farmers ?? tableData.length;
+  const numFarmers = scenarioResult?.n_farmers ?? allocations.length;
   const affectedFarmers = tableData.filter((r) => r.deficit_m3 > 0).length;
 
   // Chart 1: Requested vs Allocated
   const requestedVsAllocatedData = useMemo(() => {
+    if (!scenarioResult || tableData.length === 0) return [];
     return tableData.slice(0, 10).map((r) => ({
       name: r.farmer_id,
       farmer: r.farmer_name,
       Requested: r.requested_m3,
       Allocated: r.allocated_m3,
     }));
-  }, [tableData]);
+  }, [scenarioResult, tableData]);
 
   // Chart 2: Crop-wise water demand
   const cropWiseDemandData = useMemo(() => {
+    if (!scenarioResult || tableData.length === 0) return [];
     const cropMap: Record<string, { requested: number; allocated: number }> = {};
     tableData.forEach((r) => {
       if (!cropMap[r.crop]) {
@@ -172,10 +165,11 @@ export const OverviewPage: React.FC = () => {
       Demand: Number(vals.requested.toFixed(1)),
       Allocated: Number(vals.allocated.toFixed(1)),
     }));
-  }, [tableData]);
+  }, [scenarioResult, tableData]);
 
   // Chart 3: Reach allocation
   const reachData = useMemo(() => {
+    if (!scenarioResult || tableData.length === 0) return [];
     const reaches = ['Head-Reach', 'Middle-Reach', 'Tail-Reach'] as const;
     return reaches.map((reachName) => {
       const subset = tableData.filter((r) => r.reach === reachName);
@@ -189,10 +183,11 @@ export const OverviewPage: React.FC = () => {
         Deficit: Number(def.toFixed(1)),
       };
     });
-  }, [tableData]);
+  }, [scenarioResult, tableData]);
 
   // Chart 4: Shortage status distribution
   const statusPieData = useMemo(() => {
+    if (!scenarioResult || tableData.length === 0) return [];
     const adequate = tableData.filter((r) => r.status === 'Adequate').length;
     const partial = tableData.filter((r) => r.status === 'Partial').length;
     const shortage = tableData.filter((r) => r.status === 'Shortage').length;
@@ -201,7 +196,7 @@ export const OverviewPage: React.FC = () => {
       { name: 'Partial', value: partial, color: '#C58B20' },
       { name: 'Shortage', value: shortage, color: '#B42318' },
     ].filter((d) => d.value > 0);
-  }, [tableData]);
+  }, [scenarioResult, tableData]);
 
   // Filtered rows for the table
   const filteredRows = useMemo(() => {
@@ -214,6 +209,7 @@ export const OverviewPage: React.FC = () => {
 
   // CSV Export for administrative reporting
   const handleExportCSV = () => {
+    if (!scenarioResult || tableData.length === 0) return;
     const headers = [
       'Farmer ID',
       'Farmer Name',
@@ -242,14 +238,108 @@ export const OverviewPage: React.FC = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `water_allocation_report_${scenarioResult?.scenario_id || 'demo'}.csv`);
+    link.setAttribute('download', `water_allocation_report_${scenarioResult.scenario_id}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  // If no scenario loaded, show clear empty state banner but preserve functional dashboard
-  const isDemo = !scenarioResult;
+  // ── Clean Empty State: When scenarioResult is null, render ONLY the Empty State ──
+  if (!scenarioResult) {
+    return (
+      <div style={{ maxWidth: '1280px', margin: '0 auto', paddingBottom: '32px' }}>
+        {/* Page Header: Formal Government Banner */}
+        <div
+          style={{
+            background: '#ffffff',
+            border: '1px solid var(--border-default)',
+            borderLeft: '4px solid #12315B',
+            padding: '16px 20px',
+            marginBottom: '20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '12px',
+          }}
+        >
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h1
+                className="page-title"
+                style={{
+                  fontSize: '20px',
+                  fontWeight: 700,
+                  color: '#12315B',
+                  margin: 0,
+                }}
+              >
+                Water Distribution Dashboard
+              </h1>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  padding: '2px 8px',
+                  borderRadius: '3px',
+                  backgroundColor: '#fdf7eb',
+                  color: '#C58B20',
+                  border: '1px solid #f5dfb0',
+                  textTransform: 'uppercase',
+                }}
+              >
+                No Active Scenario
+              </span>
+            </div>
+            <p
+              className="page-description"
+              style={{
+                fontSize: '13px',
+                color: 'var(--text-muted)',
+                marginTop: '4px',
+                marginBottom: 0,
+              }}
+            >
+              <strong>Mediation Overview</strong> — No active water distribution scenario is loaded.
+              Configure and run an agronomic scenario to inspect machine learning demand predictions,
+              conflict detection, and OR-Tools linear programming water allocations.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <Link
+              to="/scenario"
+              className="btn btn-primary btn-sm"
+              style={{
+                backgroundColor: '#12315B',
+                borderColor: '#12315B',
+                color: '#FFFFFF',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <span>Run New Scenario</span>
+              <ArrowRight size={14} />
+            </Link>
+          </div>
+        </div>
+
+        {/* Stepper showing unexecuted state */}
+        <PipelineStepper scenarioResult={null} />
+
+        {/* Clean Empty State Notice */}
+        <div style={{ marginTop: '20px' }}>
+          <EmptyState
+            title="No Scenario Loaded"
+            description="No operational results are currently available. Configure an agronomic scenario and run AquaMediAI mediation to inspect decisions, optimization results, and explainability."
+            actionText="Configure & Run Scenario"
+            actionHref="/scenario"
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: '1280px', margin: '0 auto', paddingBottom: '32px' }}>
@@ -287,13 +377,13 @@ export const OverviewPage: React.FC = () => {
                 fontWeight: 700,
                 padding: '2px 8px',
                 borderRadius: '3px',
-                backgroundColor: isDemo ? '#fdf7eb' : '#eaf5ef',
-                color: isDemo ? '#C58B20' : '#176B45',
-                border: `1px solid ${isDemo ? '#f5dfb0' : '#b8e2cd'}`,
+                backgroundColor: '#eaf5ef',
+                color: '#176B45',
+                border: '1px solid #b8e2cd',
                 textTransform: 'uppercase',
               }}
             >
-              {isDemo ? 'Demonstration Data' : 'Live Scenario Solved'}
+              Live Scenario Solved
             </span>
           </div>
           <p
@@ -305,18 +395,9 @@ export const OverviewPage: React.FC = () => {
               marginBottom: 0,
             }}
           >
-            {isDemo ? (
-              <>
-                <strong>Mediation Overview</strong> — Demonstration command area allocation summary.
-                No active scenario loaded.
-              </>
-            ) : (
-              <>
-                <strong>Mediation Overview</strong> — Scenario:{' '}
-                <strong style={{ color: '#12315B' }}>{scenarioResult.scenario_id}</strong> (
-                {capitalize(scenarioResult.scenario_type)})
-              </>
-            )}
+            <strong>Mediation Overview</strong> — Scenario:{' '}
+            <strong style={{ color: '#12315B' }}>{scenarioResult.scenario_id}</strong> (
+            {capitalize(scenarioResult.scenario_type)})
           </p>
         </div>
 
@@ -349,26 +430,14 @@ export const OverviewPage: React.FC = () => {
               gap: '6px',
             }}
           >
-            <span>{isDemo ? 'Run New Scenario' : 'Change Scenario'}</span>
+            <span>Change Scenario</span>
             <ArrowRight size={14} />
           </Link>
         </div>
       </div>
 
       {/* ── Stepper ── */}
-      <PipelineStepper scenarioResult={scenarioResult || null} />
-
-      {/* ── If No Scenario Loaded: Empty State Notice (Maintains Test Anchors) ── */}
-      {isDemo && (
-        <div style={{ marginBottom: '20px' }}>
-          <EmptyState
-            title="No Scenario Loaded"
-            description="Configure an agronomic scenario and run AquaMediAI mediation to inspect decisions, optimization results, and explainability."
-            actionText="Configure & Run Scenario"
-            actionHref="/scenario"
-          />
-        </div>
-      )}
+      <PipelineStepper scenarioResult={scenarioResult} />
 
       {/* ── Section 1: Executive KPI Summary Cards ── */}
       <div
