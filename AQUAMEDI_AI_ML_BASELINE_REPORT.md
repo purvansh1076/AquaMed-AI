@@ -8,9 +8,9 @@
 
 ## XGBoost (test split, n=451)
 
-- MAE: 17.49 m³/day
-- RMSE: 27.38 m³/day
-- R²: 0.9737
+- MAE: 18.63 m³/day
+- RMSE: 29.27 m³/day
+- R²: 0.9699
 
 ## Random Forest (test split, n=451)
 
