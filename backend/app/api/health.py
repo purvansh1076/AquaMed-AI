@@ -30,7 +30,6 @@ def health_check() -> Dict[str, Any]:
     Returns system status and pipeline availability.
     Does NOT require a database connection.
     """
-    # Check if model artifacts are available
     from app.config import get_settings
     model_dir = get_settings().model_dir_path
     pipeline_available = (model_dir / "encoders.joblib").exists()
@@ -44,4 +43,22 @@ def health_check() -> Dict[str, Any]:
             "All data in this system is synthetically generated for "
             "academic demonstration purposes. No real farmer data is used."
         ),
+    }
+
+
+@router.get("/health/live", tags=["System"])
+def liveness() -> Dict[str, Any]:
+    return {"status": "alive", "service": "AquaMediAI", "version": "1.0.0"}
+
+
+@router.get("/health/ready", tags=["System"])
+def readiness() -> Dict[str, Any]:
+    from app.config import get_settings
+    model_dir = get_settings().model_dir_path
+    pipeline_available = (model_dir / "encoders.joblib").exists()
+    return {
+        "status": "ready" if pipeline_available else "not_ready",
+        "service": "AquaMediAI",
+        "version": "1.0.0",
+        "pipeline": "available" if pipeline_available else "degraded",
     }

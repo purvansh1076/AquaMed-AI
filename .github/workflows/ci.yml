@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main, feature/aquamedi-ai-product-transformation]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Test
+        working-directory: backend
+        env:
+          APP_ENV: testing
+          DATABASE_URL: postgresql+psycopg2://test:test@localhost:5432/test_aquamedi
+          SECRET_KEY: test_secret_key_for_pytest_only
+          JWT_SECRET_KEY: test_jwt_secret_key_for_pytest_only
+          EXPERT_DEFAULT_PASSWORD: AQM-GovSec-2026!k9Xv#mP4
+          ENABLE_DEV_DEMO_CREDENTIALS: "true"
+          RANDOM_SEED: "42"
+          MODEL_DIR: data/models
+          DATA_DIR: data/raw
+        run: python -m pytest -q
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+      - name: Test
+        working-directory: frontend
+        run: npm test
+      - name: Build
+        working-directory: frontend
+        run: npm run build
