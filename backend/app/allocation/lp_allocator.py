@@ -667,6 +667,60 @@ class WaterAllocator:
 
     # ─── Properties ──────────────────────────────────────────────────────────
 
+    def solve_fairness_aware(self) -> AllocationResult:
+        """
+        Experimental fairness-aware allocator: maximize the minimum farmer
+        demand-satisfaction ratio (max-min fairness), subject to the same hard
+        constraints as the standard LP. Does not replace solve().
+        """
+        t0 = __import__("time").perf_counter()
+        if len(self._agents) == 0:
+            return self._empty_result()
+        if self._available == 0.0:
+            return self._zero_water_result()
+
+        solver = pywraplp.Solver.CreateSolver("GLOP")
+        if solver is None:
+            return self._proportional_fallback(SolverStatus.ERROR, "proportional_fallback")
+
+        x = []
+        for agent in self._agents:
+            xi = solver.NumVar(0.0, agent.maximum_water_requirement, f"x_{agent.farmer_id}")
+            x.append(xi)
+        t = solver.NumVar(0.0, 1.0, "min_satisfaction")
+
+        # supply constraint with conveyance
+        source_terms = []
+        for i, agent in enumerate(self._agents):
+            eta = max(0.1, min(1.0, self._conveyance.get(agent.farmer_id, 1.0)))
+            source_terms.append((1.0 / eta) * x[i])
+        solver.Add(solver.Sum(source_terms) <= self._available, name="supply_limit")
+
+        # t <= s_i = x_i / demand_i  ->  x_i >= t * demand_i
+        for i, agent in enumerate(self._agents):
+            d = max(agent.predicted_water_demand, 1e-9)
+            solver.Add(x[i] >= t * d, name=f"minsat_{agent.farmer_id}")
+
+        solver.Maximize(t)
+        status_code = solver.Solve()
+        _status_map = {
+            pywraplp.Solver.OPTIMAL: SolverStatus.OPTIMAL,
+            pywraplp.Solver.FEASIBLE: SolverStatus.FEASIBLE,
+        }
+        solver_status = _status_map.get(status_code, SolverStatus.ERROR)
+
+        if solver_status in (SolverStatus.OPTIMAL, SolverStatus.FEASIBLE):
+            raw = [max(0.0, x[i].solution_value()) for i in range(len(self._agents))]
+            # numerical conservation
+            total_raw = sum(raw)
+            if total_raw > self._available + 1e-9 and total_raw > 0:
+                scale = self._available / total_raw
+                raw = [v * scale for v in raw]
+            result = self._build_result(raw, solver_status, float(solver.Objective().Value()), "lp_maxmin_fairness")
+            return result
+
+        return self._proportional_fallback(SolverStatus.ERROR, "proportional_fallback")
+
     @property
     def constraints(self) -> AllocationConstraints:
         return self._constraints
