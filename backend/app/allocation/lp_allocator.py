@@ -252,17 +252,22 @@ class WaterAllocator:
                 method="proportional_fallback",
             )
 
-        # ── Fallback chain: lp_optimal → lp_relaxed → proportional → empty ────
-        if result.allocation_method != "lp_relaxed":
-            # Try LP-relaxed fallback (soft minimum penalties)
-            if result.allocation_method != "lp_relaxed":
-                logger.warning(
-                    "LP solver returned %s — trying lp_relaxed fallback.",
-                    result.solver_status.value,
-                )
-                result = self._lp_relaxed_fallback()
-            # If lp_relaxed also failed (or was already used), use proportional
-            if result.solver_status not in (SolverStatus.OPTIMAL, SolverStatus.FEASIBLE):
+        # ── Fallback chain: only when the primary solve did not succeed ────────
+        # A successful primary solve (optimal / feasible / relaxed / empty) must
+        # never be overwritten by the relaxed or proportional fallback.
+        _SUCCESS_STATUSES = (
+            SolverStatus.OPTIMAL,
+            SolverStatus.FEASIBLE,
+            SolverStatus.RELAXED,
+            SolverStatus.EMPTY,
+        )
+        if result.solver_status not in _SUCCESS_STATUSES:
+            logger.warning(
+                "LP solver returned %s — trying lp_relaxed fallback.",
+                result.solver_status.value,
+            )
+            result = self._lp_relaxed_fallback()
+            if result.solver_status not in _SUCCESS_STATUSES:
                 logger.warning(
                     "lp_relaxed fallback also returned %s — using proportional fallback.",
                     result.solver_status.value,
@@ -575,6 +580,14 @@ class WaterAllocator:
         then verify constraints independently.
         """
         is_feasible = self._constraints.is_minimum_feasible
+
+        # Numerical safety: ensure the extracted allocation does not exceed the
+        # available supply due to solver tolerance. Scale down proportionally if
+        # necessary; this preserves non-negativity and the relative distribution.
+        _raw_total = sum(float(v) for v in raw_allocations)
+        if _raw_total > self._available + 1e-9 and _raw_total > 0.0:
+            _scale = self._available / _raw_total
+            raw_allocations = [float(v) * _scale for v in raw_allocations]
 
         farmer_allocations: List[FarmerAllocation] = []
         for i, agent in enumerate(self._agents):

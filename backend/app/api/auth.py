@@ -166,17 +166,25 @@ def expert_login(
     department = "Department of Agriculture & Water Resources"
     target_email = settings.expert_default_email.lower()
 
-    if identifier in {target_email, "expert", "admin", "expert@aquamedi.gov.in", "admin123"}:
-        # Compare with configured expert password or prototype admin123 credentials (if dev credentials enabled)
+    allowed_identifiers = {target_email, "expert", "admin", "expert@aquamedi.gov.in"}
+    dev_credentials_enabled = (
+        getattr(settings, "enable_dev_demo_credentials", False)
+        and settings.app_env != "production"
+    )
+    if dev_credentials_enabled:
+        allowed_identifiers.add("admin123")
+
+    if identifier in allowed_identifiers:
+        # Compare with configured expert password or prototype admin123 credentials (dev only)
         expected_pwd = settings.expert_default_password
         if identifier == "admin123" and payload.password == "12345678":
-            if getattr(settings, "enable_dev_demo_credentials", False):
+            if dev_credentials_enabled:
                 is_valid = True
                 target_email = "admin123@aquamedi.gov.in"
                 full_name = "Senior Agricultural Specialist (Admin)"
                 department = "Agricultural Intelligence"
             else:
-                logger.warning("Prototype credentials rejected: enable_dev_demo_credentials is False")
+                logger.warning("Prototype credentials rejected: dev credentials disabled or production env")
         elif hmac.compare_digest(payload.password, expected_pwd):
             is_valid = True
 

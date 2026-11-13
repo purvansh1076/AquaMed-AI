@@ -13,7 +13,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import List
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -38,20 +38,18 @@ class Settings(BaseSettings):
     app_debug: bool = True
     app_host: str = "0.0.0.0"
     app_port: int = 8000
-    secret_key: str = "CHANGE_ME_IN_PRODUCTION"
-
+    secret_key: str = ""
     # ── Authentication & Security ──────────────────────────────────────────────
-    jwt_secret_key: str = "aquamedi_government_grade_secret_key_2026_secure_key"
+    jwt_secret_key: str = ""
     jwt_algorithm: str = "HS256"
     jwt_expire_hours: int = 8
     guest_session_expire_hours: int = 24
     expert_default_email: str = "expert@aquamedi.gov.in"
-    expert_default_password: str = "AQM-GovSec-2026!k9Xv#mP4"
+    expert_default_password: str = ""
     expert_default_name: str = "Senior Agricultural Specialist"
     auth_rate_limit_max_attempts: int = 5
     auth_rate_limit_lockout_seconds: int = 900
-    enable_dev_demo_credentials: bool = True
-
+    enable_dev_demo_credentials: bool = False
     # ── Database ───────────────────────────────────────────────────────────────
     database_url: str = (
         "postgresql+psycopg2://aquamedi:aquamedi_secret@localhost:5432/aquamedi_db"
@@ -160,6 +158,22 @@ class Settings(BaseSettings):
         if v_upper not in allowed:
             raise ValueError(f"log_level must be one of {allowed}")
         return v_upper
+
+    @model_validator(mode="after")
+    def validate_production_secrets(self) -> "Settings":
+        if self.app_env == "production":
+            missing = []
+            if not self.jwt_secret_key:
+                missing.append("JWT_SECRET_KEY")
+            if not self.expert_default_password:
+                missing.append("EXPERT_DEFAULT_PASSWORD")
+            if not self.secret_key:
+                missing.append("SECRET_KEY")
+            if missing:
+                raise ValueError(
+                    "Missing required production secrets: " + ", ".join(missing)
+                )
+        return self
 
 
 @lru_cache(maxsize=1)

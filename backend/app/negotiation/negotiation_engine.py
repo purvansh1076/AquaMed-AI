@@ -297,6 +297,7 @@ class NegotiationEngine:
         )
 
         current_allocation = dict(initial_allocation)
+        current_responses = list(initial_responses)
         best_allocation = dict(initial_allocation)
         best_nash = initial_nash
         best_utilities = dict(initial_utilities)
