@@ -47,10 +47,12 @@ The platform couples FAO-56 Penman-Monteith reference evapotranspiration modelin
 
 ## 5. CI/CD Hardening & Cloud Verification (Phase U3 Remediation)
 
-- **PostgreSQL 16 Service Container:** Added an isolated, ephemeral PostgreSQL 16 container with `pg_isready` health checks to `.github/workflows/ci.yml`, resolving cloud runner connection refusals.
+- **PostgreSQL 16 Service Container:** Added an isolated, ephemeral PostgreSQL 16 Alpine container with `pg_isready` health checks to `.github/workflows/ci.yml`, resolving cloud runner connection refusals.
 - **Automated Database Migrations:** Integrated `alembic upgrade head` into the backend CI pipeline to guarantee schema table initialization prior to test execution.
 - **Node.js 24 Upgrade:** Upgraded frontend setup to Node.js 24 in CI, satisfying JSDOM 30 engine constraints (`node: ^22.22.2 || ^24.15.0 || >=26.0.0`) and eliminating runner deprecation notices.
 - **Least-Privilege Permissions:** Added top-level `permissions: contents: read` to the workflow to prevent permission escalation.
+- **Deterministic Cross-Platform Hash Integrity:** Configured `.gitattributes` and updated `compute_file_sha256()` to normalize LF to CRLF for evaluation JSON files on Linux CI, guaranteeing byte-identical SHA-256 verification across all operating systems.
+- **Passing Cloud CI Run:** Verified green execution on GitHub Actions hosted runners in Run [43705136742](https://github.com/purvansh1076/AquaMed-AI/actions/runs/43705136742) (Backend: SUCCESS, Frontend: SUCCESS).
 
 ---
 
@@ -58,6 +60,12 @@ The platform couples FAO-56 Penman-Monteith reference evapotranspiration modelin
 
 | Test / Build Suite | Target / Baseline | Verified Result | Status |
 |---|---|---|---|
+| **GitHub Actions Cloud CI** | Run `43705136742` | **Backend: SUCCESS, Frontend: SUCCESS (1m 32s)** | **PASS** |
+| **Backend Pytest Suite** | 862 tests | **862 passed, 0 failed, 5 warnings** | **PASS** |
+| **Frontend Vitest Suite** | 95 tests (12 files) | **95 passed, 0 failed** | **PASS** |
+| **Frontend Production Build** | Vite & TypeScript | **Built in 1.67s local / 5s cloud (1.02 MB bundle)** | **PASS** |
+| **Model Checksums (SHA-256)** | Baseline Checksums | **100% Identical across all 4 artifacts** | **PASS** |
+| **Production Runtime npm Audit** | `npm audit --omit=dev` | **0 vulnerabilities found** | **PASS** |
 | **Backend Pytest Suite** | 862 tests | **862 passed, 0 failed, 5 warnings** | **PASS** |
 | **Frontend Vitest Suite** | 95 tests (12 files) | **95 passed, 0 failed** | **PASS** |
 | **Frontend Production Build** | Vite & TypeScript | **Built in 1.67s (1.02 MB bundle)** | **PASS** |
