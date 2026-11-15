@@ -156,6 +156,25 @@ class NegotiationEngine:
         """Return the active or completed negotiation session, including rounds and history."""
         return self._session
 
+    def convergence_report(self) -> dict:
+        """Return a measurable convergence summary for the completed session."""
+        if self._session is None:
+            return {"status": "no_session", "rounds": 0, "converged": False}
+        rounds = self._session.rounds
+        nash = [r.nash_objective for r in rounds]
+        delta = (nash[-1] - nash[0]) if len(nash) > 1 else 0.0
+        converged = self._session.status is not None and self._session.status.value in {
+            "AGREED", "NO_FEASIBLE_IMPROVEMENT",
+        }
+        return {
+            "status": self._session.status.value if self._session.status else "unknown",
+            "rounds": len(rounds),
+            "nash_delta": float(delta),
+            "final_nash": float(nash[-1]) if nash else 0.0,
+            "converged": bool(converged),
+            "termination_reason": self._session.agreement.termination_reason if self._session.agreement else "",
+        }
+
     def run(self) -> Agreement:
         """
         Run the full negotiation process and return an Agreement.
@@ -297,6 +316,7 @@ class NegotiationEngine:
         )
 
         current_allocation = dict(initial_allocation)
+        current_responses = list(initial_responses)
         best_allocation = dict(initial_allocation)
         best_nash = initial_nash
         best_utilities = dict(initial_utilities)

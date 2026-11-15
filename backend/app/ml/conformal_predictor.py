@@ -21,14 +21,24 @@ logger = logging.getLogger(__name__)
 # Derived from actual XGBoost absolute residuals on the validation split: |y_val - y_hat|
 # Empirical 90% quantile is 45.68 m³ (providing 90.47% empirical coverage on held-out test split)
 DEFAULT_Q_HAT_M3 = 45.68
+# Normalized non-conformity quantile (residuals divided by area scaling) - see Lei et al. (2018).
+DEFAULT_Q_NORM_M3 = 25.6610
 
 
 class ConformalPredictor:
     """Split conformal predictor for crop water demand regression."""
 
-    def __init__(self, q_hat: float = DEFAULT_Q_HAT_M3, confidence_level: float = 0.90) -> None:
+    def __init__(
+        self,
+        q_hat: float = DEFAULT_Q_HAT_M3,
+        q_norm: float = DEFAULT_Q_NORM_M3,
+        confidence_level: float = 0.90,
+        use_normalized: bool = True,
+    ) -> None:
         self.q_hat = q_hat
+        self.q_norm = q_norm
         self.confidence_level = confidence_level
+        self.use_normalized = use_normalized
 
     def predict_interval(
         self,
@@ -58,8 +68,12 @@ class ConformalPredictor:
             - confidence_level (0.90)
             - method ("Split Conformal Prediction")
         """
-        # Scale q_hat slightly with area to account for spatial heterogeneity
-        scaled_q_hat = self.q_hat * (0.8 + 0.2 * max(0.5, min(5.0, farm_area_ha)))
+        # Area-dependent scaling factor (Lei et al., 2018).
+        _scale = 0.8 + 0.2 * max(0.5, min(5.0, farm_area_ha))
+        if self.use_normalized:
+            scaled_q_hat = self.q_norm * _scale
+        else:
+            scaled_q_hat = self.q_hat * _scale
 
         lower = max(0.0, round(point_prediction_m3 - scaled_q_hat, 2))
         upper = round(point_prediction_m3 + scaled_q_hat, 2)

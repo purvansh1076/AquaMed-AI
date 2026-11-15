@@ -453,6 +453,7 @@ def run_training_pipeline(
         "n_features": n_features,
         "feature_columns": ENGINEERED_FEATURE_COLS,
         "target_column": TARGET_COL,
+        "training_target_mean": float(np.mean(y_train)),
         "seed": seed,
         "scenario_distribution": df["scenario_type"].value_counts().to_dict(),
         "data_disclaimer": (
@@ -553,9 +554,25 @@ def load_model(model_dir: Path, model_name: str = "XGBoost") -> Any:
             booster = model.get_booster()
             config = json.loads(booster.save_config())
             base_score_str = config.get("learner", {}).get("learner_model_param", {}).get("base_score", "0.5")
-            if float(base_score_str) < 1.0:
-                logger.info("Calibrating unpickled XGBoost base_score to training mean 214.17618")
-                booster.set_param("base_score", 214.17618)
+            # XGBoost may serialize base_score as a list-like string, e.g. "[2.1417618E2]".
+            _clean = str(base_score_str).strip().strip("[]").split()
+            _base_val = float(_clean[0]) if _clean else 0.5
+            # Resolve the training target mean from persisted evaluation results when
+            # available, falling back to the known historical mean for older artifacts.
+            target_mean = 214.17618
+            eval_path = model_dir / EVAL_RESULTS_FILE
+            if eval_path.exists():
+                try:
+                    with open(eval_path, encoding="utf-8") as f:
+                        eval_data = json.load(f)
+                    ds = eval_data.get("dataset", {})
+                    if isinstance(ds, dict) and "training_target_mean" in ds:
+                        target_mean = float(ds["training_target_mean"])
+                except (json.JSONDecodeError, OSError, ValueError, TypeError):
+                    pass
+            if _base_val < 1.0:
+                logger.info("Calibrating unpickled XGBoost base_score to training mean %s", target_mean)
+                booster.set_param("base_score", target_mean)
         except Exception as exc:
             logger.warning("Could not verify/calibrate XGBoost base_score: %s", exc)
 

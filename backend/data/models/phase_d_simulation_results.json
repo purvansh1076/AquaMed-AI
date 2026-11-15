@@ -1,0 +1,101 @@
+[
+  {
+    "scenario": "normal_water",
+    "n_farmers": 5,
+    "available_water_m3": 1531.44,
+    "total_demand_m3": 1298.75,
+    "final_allocation": {
+      "FARM_0001": 336.46,
+      "FARM_0002": 235.74,
+      "FARM_0003": 171.95,
+      "FARM_0004": 610.5,
+      "FARM_0005": 176.78
+    },
+    "rounds": 1,
+    "status": "AGREED",
+    "termination_reason": "All farmers accepted the initial LP allocation.",
+    "fairness": {
+      "jains_fairness_index": 1.0,
+      "minimum_satisfaction": 1.0,
+      "mean_satisfaction": 1.0,
+      "allocation_efficiency": 1.0,
+      "water_deficit": 0.0,
+      "allocation_disparity": 0.0
+    },
+    "runtime_ms": 4.95,
+    "convergence": {
+      "status": "AGREED",
+      "rounds": 1,
+      "nash_delta": 0.0,
+      "final_nash": -2.913513498107363,
+      "converged": true,
+      "termination_reason": "All farmers accepted the initial LP allocation."
+    }
+  },
+  {
+    "scenario": "moderate_shortage",
+    "n_farmers": 5,
+    "available_water_m3": 1007.06,
+    "total_demand_m3": 1298.75,
+    "final_allocation": {
+      "FARM_0001": 336.46,
+      "FARM_0002": 124.34,
+      "FARM_0003": 171.95,
+      "FARM_0004": 197.52,
+      "FARM_0005": 176.78
+    },
+    "rounds": 1,
+    "status": "AGREED",
+    "termination_reason": "All farmers accepted the initial LP allocation.",
+    "fairness": {
+      "jains_fairness_index": 0.9063867144094812,
+      "minimum_satisfaction": 0.3717655351687368,
+      "mean_satisfaction": 0.8009448721321956,
+      "allocation_efficiency": 0.7754078419333905,
+      "water_deficit": 291.68879455566423,
+      "allocation_disparity": 0.6282344648312632
+    },
+    "runtime_ms": 0.92,
+    "convergence": {
+      "status": "AGREED",
+      "rounds": 1,
+      "nash_delta": 0.0,
+      "final_nash": -4.217049448049296,
+      "converged": true,
+      "termination_reason": "All farmers accepted the initial LP allocation."
+    }
+  },
+  {
+    "scenario": "severe_shortage",
+    "n_farmers": 5,
+    "available_water_m3": 687.46,
+    "total_demand_m3": 1298.75,
+    "final_allocation": {
+      "FARM_0001": 113.88,
+      "FARM_0002": 82.8,
+      "FARM_0003": 116.48,
+      "FARM_0004": 197.52,
+      "FARM_0005": 176.78
+    },
+    "rounds": 1,
+    "status": "AGREED",
+    "termination_reason": "All farmers accepted the initial LP allocation.",
+    "fairness": {
+      "jains_fairness_index": 0.847392121738358,
+      "minimum_satisfaction": 0.3717655351687368,
+      "mean_satisfaction": 0.6024551555119457,
+      "allocation_efficiency": 0.5293248416335956,
+      "water_deficit": 611.288794555664,
+      "allocation_disparity": 0.6282344648312632
+    },
+    "runtime_ms": 0.84,
+    "convergence": {
+      "status": "AGREED",
+      "rounds": 1,
+      "nash_delta": 0.0,
+      "final_nash": -5.737682352910055,
+      "converged": true,
+      "termination_reason": "All farmers accepted the initial LP allocation."
+    }
+  }
+]

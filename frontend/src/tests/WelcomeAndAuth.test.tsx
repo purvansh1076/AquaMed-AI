@@ -193,8 +193,8 @@ describe('Government Entry & Role Selection Flow', () => {
     });
   });
 
-  // FLOW 5 (Offline fallback): Prototype admin123 works even if backend is unreachable
-  it('offline fallback enables admin123 / 12345678 prototype login when backend is offline', async () => {
+  // FLOW 5 (Security): No client-side auth fallback when backend is unreachable
+  it('does not fabricate an expert session when backend is offline', async () => {
     const user = userEvent.setup();
     vi.spyOn(api, 'loginExpert').mockRejectedValue(new Error('Network error: backend offline'));
 
@@ -206,14 +206,13 @@ describe('Government Entry & Role Selection Flow', () => {
     const submitBtn = screen.getByRole('button', { name: /Secure Login/i });
     await user.click(submitBtn);
 
-    // Navigates to overview via demo fallback session
+    // Login fails gracefully; no expert session is persisted.
     await waitFor(() => {
-      expect(screen.getAllByText('Dashboard Overview').length).toBeGreaterThan(0);
+      expect(screen.getByText(/Invalid expert credentials|Network error/i)).toBeInTheDocument();
     });
 
-    const saved = JSON.parse(localStorage.getItem('aquamedi_auth_session') || '{}');
-    expect(saved.role).toBe('expert');
-    expect(saved.token).toMatch(/^demo_expert_/);
+    const saved = localStorage.getItem('aquamedi_auth_session');
+    expect(saved === null || !JSON.parse(saved || '{}').token?.startsWith('demo_expert_')).toBe(true);
   });
 
   // FLOW 8: Logout works correctly

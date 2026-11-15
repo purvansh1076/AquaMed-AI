@@ -25,6 +25,9 @@ os.environ.setdefault("RANDOM_SEED", "42")
 os.environ.setdefault("MODEL_DIR", "data/models")
 os.environ.setdefault("DATA_DIR", "data/raw")
 os.environ.setdefault("SECRET_KEY", "test_secret_key_for_pytest_only")
+os.environ.setdefault("JWT_SECRET_KEY", "test_jwt_secret_key_for_pytest_only")
+os.environ.setdefault("EXPERT_DEFAULT_PASSWORD", "AQM-GovSec-2026!k9Xv#mP4")
+os.environ.setdefault("ENABLE_DEV_DEMO_CREDENTIALS", "true")
 
 
 @pytest.fixture(scope="session")

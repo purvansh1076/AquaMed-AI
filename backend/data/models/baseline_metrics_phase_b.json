@@ -1,0 +1,107 @@
+{
+  "seed": 42,
+  "n_samples": 3000,
+  "splits": {
+    "train": 2099,
+    "val": 450,
+    "test": 451
+  },
+  "features": [
+    "farm_area_hectares",
+    "et0_mm_per_day",
+    "kc_value",
+    "etc_mm_per_day",
+    "soil_whc_mm_per_m",
+    "preferred_start_hour",
+    "irrigation_window_hours",
+    "flexibility_score",
+    "urgency_score",
+    "crop_stress_index",
+    "temperature_celsius",
+    "humidity_percent",
+    "rainfall_mm",
+    "crop_type_encoded",
+    "soil_type_encoded",
+    "growth_stage_encoded",
+    "season_encoded",
+    "area_x_etc",
+    "urgency_x_stress",
+    "et0_x_kc",
+    "rain_deficit",
+    "flexibility_window"
+  ],
+  "models": {
+    "XGBoost": {
+      "train": {
+        "mae": 8.100536854831645,
+        "rmse": 11.2620676532852,
+        "r2": 0.995364267205202,
+        "n_samples": 2099,
+        "split": "train"
+      },
+      "val": {
+        "mae": 18.81713057929145,
+        "rmse": 29.57775935909683,
+        "r2": 0.9700316901146463,
+        "n_samples": 450,
+        "split": "val"
+      },
+      "test": {
+        "mae": 18.63126924958832,
+        "rmse": 29.266090053634084,
+        "r2": 0.9699499922347739,
+        "n_samples": 451,
+        "split": "test"
+      },
+      "conformal_normalized": {
+        "coverage": 0.9024390243902439,
+        "mean_width": 80.63860310421286,
+        "median_width": 90.37
+      },
+      "conformal_raw": {
+        "coverage": 0.9733924611973392,
+        "mean_width": 141.649689578714,
+        "median_width": 160.3
+      }
+    },
+    "RandomForest": {
+      "train": {
+        "mae": 7.162407790526727,
+        "rmse": 11.52077965180191,
+        "r2": 0.9951488369471692,
+        "n_samples": 2099,
+        "split": "train"
+      },
+      "val": {
+        "mae": 17.794448684442347,
+        "rmse": 27.438677700588247,
+        "r2": 0.9742096007580902,
+        "n_samples": 450,
+        "split": "val"
+      },
+      "test": {
+        "mae": 17.4864763813732,
+        "rmse": 27.37614520636928,
+        "r2": 0.9737058115710668,
+        "n_samples": 451,
+        "split": "test"
+      },
+      "conformal_normalized": {
+        "coverage": 0.9024390243902439,
+        "mean_width": 80.53751662971175,
+        "median_width": 90.37
+      },
+      "conformal_raw": {
+        "coverage": 0.9800443458980045,
+        "mean_width": 141.50381374722838,
+        "median_width": 160.28
+      }
+    }
+  },
+  "artifact_hashes": {
+    "xgb_model.joblib": "0b320f0730fa4c57863a4435c40139fa433cd248cd2991f915a5a657efd97d56",
+    "rf_model.joblib": "84d37e0d80cf37aa058acaec4fef850c90a10f6c80000d260bebc14dadd11d75",
+    "encoders.joblib": "bdaa3f8e9332242e49d5feee737ada7d908ef89f8adcadce5d5cbaf1b9fa32dd",
+    "evaluation_results.json": "85c1972fbc5fd32bcd9e1305bdc49dc98d7ddf57bc68c6291ca3f7dd2bb2ecd7"
+  }
+}

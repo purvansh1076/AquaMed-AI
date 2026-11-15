@@ -1,0 +1,14 @@
+# Auto-detect text files and normalize line endings
+* text=auto
+
+# Binary files - prevent any line ending modifications
+*.joblib binary
+*.pkl binary
+*.png binary
+*.jpg binary
+*.ico binary
+
+# Enforce CRLF on baseline evaluation JSON artifacts so their cryptographic SHA-256 digests
+# remain byte-identical across Linux, macOS, and Windows environments
+backend/data/models/evaluation_results.json text eol=crlf
+backend/data/models/candidate_v1/evaluation_metrics.json text eol=crlf
