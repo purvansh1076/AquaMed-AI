@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from app.config import get_settings
 
@@ -60,9 +60,21 @@ def _load_q_hat_from_artifacts() -> float:
 class ConformalPredictor:
     """Split conformal predictor for crop water demand regression."""
 
-    def __init__(self, q_hat: float = DEFAULT_Q_HAT_M3, confidence_level: float = 0.90) -> None:
-        self.q_hat = q_hat
+    def __init__(
+        self,
+        q_hat: Optional[float] = None,
+        q_norm: Optional[float] = None,
+        use_normalized: bool = False,
+        confidence_level: float = 0.90,
+    ) -> None:
+        self.use_normalized = use_normalized
         self.confidence_level = confidence_level
+        if use_normalized:
+            self.q_norm = q_norm if q_norm is not None else DEFAULT_Q_NORM_M3
+            self.q_hat = None
+        else:
+            self.q_hat = q_hat if q_hat is not None else DEFAULT_Q_HAT_M3
+            self.q_norm = None
 
     def predict_interval(
         self,
@@ -92,8 +104,11 @@ class ConformalPredictor:
             - confidence_level (0.90)
             - method ("Split Conformal Prediction")
         """
-        # Scale q_hat slightly with area to account for spatial heterogeneity
-        scaled_q_hat = self.q_hat * (0.8 + 0.2 * max(0.5, min(5.0, farm_area_ha)))
+        scale = (0.8 + 0.2 * max(0.5, min(5.0, farm_area_ha)))
+        if self.use_normalized:
+            scaled_q_hat = (self.q_norm or DEFAULT_Q_NORM_M3) * scale
+        else:
+            scaled_q_hat = (self.q_hat or DEFAULT_Q_HAT_M3) * scale
 
         lower = max(0.0, round(point_prediction_m3 - scaled_q_hat, 2))
         upper = round(point_prediction_m3 + scaled_q_hat, 2)
