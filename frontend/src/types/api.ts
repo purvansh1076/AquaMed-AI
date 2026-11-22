@@ -218,6 +218,11 @@ export interface PredictionResponse {
   shadow_comparison?: ShadowComparisonDetails | Record<string, unknown> | null;
   shadow_candidate_v3_estimate_m3?: number | null;
   shadow_candidate_v3_comparison?: Record<string, unknown> | null;
+  conformal_interval?: {
+    lower_bound_m3: number;
+    upper_bound_m3: number;
+    confidence_level: number;
+  } | null;
 }
 
 export interface PredictionBatchResponse {

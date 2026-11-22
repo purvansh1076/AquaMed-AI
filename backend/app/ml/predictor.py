@@ -103,6 +103,7 @@ class PredictionResult:
     shadow_comparison: Optional[Dict[str, Any]] = None
     shadow_candidate_v3_estimate_m3: Optional[float] = None
     shadow_candidate_v3_comparison: Optional[Dict[str, Any]] = None
+    conformal_interval: Optional[Dict[str, Any]] = None
 
     def as_dict(self) -> Dict[str, Any]:
         return {
@@ -115,6 +116,7 @@ class PredictionResult:
             "shadow_comparison": self.shadow_comparison,
             "shadow_candidate_v3_estimate_m3": self.shadow_candidate_v3_estimate_m3,
             "shadow_candidate_v3_comparison": self.shadow_candidate_v3_comparison,
+            "conformal_interval": self.conformal_interval,
         }
 
 
@@ -274,6 +276,14 @@ class WaterDemandPredictor:
                     "reasons": [f"Shadow execution failed: {str(exc)}"],
                 }
 
+        from app.ml.conformal_predictor import conformal_predictor
+
+        conformal = conformal_predictor.predict_interval(
+            point_prediction_m3=pred_val,
+            farm_area_ha=float(validated.get("farm_area_hectares", 1.0)),
+            growth_stage=str(validated.get("growth_stage", "vegetative")),
+        )
+
         return PredictionResult(
             predicted_water_demand_m3=pred_val,
             model_name=self._model_name,
@@ -284,6 +294,7 @@ class WaterDemandPredictor:
             shadow_comparison=shadow_comp,
             shadow_candidate_v3_estimate_m3=cand_v3_val,
             shadow_candidate_v3_comparison=cand_v3_comp,
+            conformal_interval=conformal,
         )
 
     def predict_batch(

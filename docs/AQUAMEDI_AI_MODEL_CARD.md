@@ -122,3 +122,13 @@ R^2 &= 0.96994999 \approx \mathbf{0.9699} \\
 | Wheat | 95 | $152.6$ | $0.9701$ | $16.95$ | $90.5\%$ |
 | Soybean | 90 | $138.9$ | $0.9678$ | $18.12$ | $90.0\%$ |
 | Gram (Chickpea) | 86 | $104.2$ | $0.9720$ | $15.54$ | $90.7\%$ |
+
+## Limitations
+
+- Synthetic data only; no real-farmer validation.
+- ML is a learned surrogate of the FAO-56 formula.
+- No production deployment or independent audit.
+
+## Served model decision
+
+Production defaults to XGBoost (564 KB) rather than RandomForest (16 MB) for size and inference speed; RandomForest remains preserved as a benchmark.

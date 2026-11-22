@@ -113,6 +113,7 @@ def prediction_to_dict(pred: Any, farmer_id: Optional[str] = None) -> Dict[str, 
     else:
         pred_item["shadow_candidate_v3_estimate_m3"] = None
     pred_item["shadow_candidate_v3_comparison"] = getattr(pred, "shadow_candidate_v3_comparison", None)
+    pred_item["conformal_interval"] = getattr(pred, "conformal_interval", None)
     return pred_item
 
 

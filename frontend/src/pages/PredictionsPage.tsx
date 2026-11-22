@@ -209,6 +209,11 @@ export const PredictionsPage: React.FC = () => {
                     </div>
                     <div className="card-subtitle">
                       Total Predicted Water Demand: <strong>{formatWater(activePrediction.predicted_water_demand_m3)}</strong>
+                      {activePrediction.conformal_interval && (
+                        <span style={{ marginLeft: '12px', fontSize: '0.85em', color: '#475569' }}>
+                          (90% interval: {formatWater(activePrediction.conformal_interval.lower_bound_m3)} – {formatWater(activePrediction.conformal_interval.upper_bound_m3)})
+                        </span>
+                      )}
                     </div>
                   </div>
                   {activeExplanation?.shap_available && (

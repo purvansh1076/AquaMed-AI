@@ -1,15 +1,22 @@
 # AquaMediAI
 
-> **Government-Grade Explainable AI Agricultural Water-Sharing Dispute Mediation & Decision Platform**  
-> *Production-Ready Intelligent Irrigation Allocation, Regional Conflict Mediation, and Farmer Advisory System*
+> **Explainable AI Agricultural Water-Sharing Dispute Mediation & Decision Platform (Research Prototype)**  
+> *3rd-year BTech CSE project — synthetic-data research prototype, not a production system*
 
 ---
+
+## Limitations (read first)
+
+- All data is **synthetic**; there is no real-farmer validation yet.
+- ML models are surrogates of the FAO-56 agronomic formula for fast scenario evaluation.
+- No government deployment, no production SLA, no independent audit.
+- Remote sensing and weather fallbacks are simulated, not live satellite/IMD feeds.
 
 ## 1. Problem Statement & Overview
 
 Agricultural water scarcity and rotational canal distribution frequently precipitate acute disputes among regional farming communities. Traditional administrative water rationing often lacks transparency, struggles to accommodate asymmetric crop sensitivities and irrigation timing constraints, and offers farmers little insight into why specific allocation decisions were made.
 
-**AquaMediAI** is a production-grade, government-grade agricultural intelligence and dispute mediation platform designed to:
+**AquaMediAI** is an academic research prototype (3rd-year BTech CSE) for explainable AI agricultural water-sharing dispute mediation, built entirely on synthetic data:
 1. Predict crop water demand with high precision from agronomic and environmental parameters using a production-hardened **XGBoost Regressor** ($R^2 = 0.9699$, $\text{MAE} = 18.63\text{ m}^3$).
 2. Deliver **Frictionless Farmer Access**: 1-click guest access without login credentials, presenting plain-language recommendations across 4 regional languages (**English**, **Hindi**, **Gujarati**, and **Marathi**).
 3. Provide **Secure Agricultural Expert Access**: Role-based access control (RBAC), cryptographically salted PBKDF2 password hashing, brute-force rate-limiting, and deep analytical dashboards.
@@ -39,7 +46,7 @@ Agricultural water scarcity and rotational canal distribution frequently precipi
 - **Strict Role-Based Sandboxing**: Guest farmer sessions cannot access administrative, scenario-execution, or conflict-resolution endpoints (server-side HTTP 403 Forbidden).
 
 ### B. Authenticated Agricultural Expert Access
-- **Government-Grade Login**: Extension officers, canal engineers, and agronomists authenticate via `/expert-login`.
+- **Expert Login**: Extension officers, canal engineers, and agronomists authenticate via `/expert-login`.
 - **Environment-Provisioned Account**: Configured securely via `EXPERT_DEFAULT_EMAIL` and `EXPERT_DEFAULT_PASSWORD` in `backend/.env` (no hardcoded credentials embedded in frontend).
 - **Security & Rate Limiting**: Passwords hashed with **PBKDF2-HMAC-SHA256** (100,000 iterations); progressive brute-force lockout after 5 consecutive failed attempts (15-minute lock).
 - **Advanced Engineering Controls**: Full access to OR-Tools GLOP solver logs, Nash bargaining rounds, TreeSHAP force plots, and manual scenario execution.
@@ -105,7 +112,7 @@ Agricultural water scarcity and rotational canal distribution frequently precipi
                                                          │
                                                          ▼
                                   ┌───────────────────────────────────────────────┐
-                                  │    Government-Grade React 19 Frontend (nsw)   │
+                                  │    React 19 Frontend (nsw)   │
                                   │       [Welcome Portal | Farmer | Expert]      │
                                   └───────────────────────────────────────────────┘
 ```
@@ -283,7 +290,7 @@ Once both servers are running:
 
 | Service / Interface | Local URL | Description |
 | :--- | :--- | :--- |
-| **Welcome Portal** | [http://127.0.0.1:5173/welcome](http://127.0.0.1:5173/welcome) | Government-grade portal landing & role selection |
+| **Welcome Portal** | [http://127.0.0.1:5173/welcome](http://127.0.0.1:5173/welcome) | Portal portal landing & role selection |
 | **Farmer Dashboard** | [http://127.0.0.1:5173/farmer-portal](http://127.0.0.1:5173/farmer-portal) | Plain-language farmer irrigation advisory |
 | **Expert Login** | [http://127.0.0.1:5173/expert-login](http://127.0.0.1:5173/expert-login) | Secure official login for agricultural officers |
 | **Expert Analytical Dashboard** | [http://127.0.0.1:5173/overview](http://127.0.0.1:5173/overview) | Multi-farmer mediation, conflict graphs, LP solver |
@@ -343,6 +350,6 @@ python -m pytest tests/ --tb=short
 
 ## 14. Academic & Engineering Attribution
 
-- **Project**: AquaMediAI — Government-Grade Explainable AI Water-Sharing Dispute Mediation System
+- **Project**: AquaMediAI — Explainable AI Water-Sharing Dispute Mediation System (research prototype)
 - **Engineering Stack**: FastAPI, React 19, TypeScript, XGBoost 2.0, Google OR-Tools GLOP, TreeSHAP
 - **License**: MIT License
