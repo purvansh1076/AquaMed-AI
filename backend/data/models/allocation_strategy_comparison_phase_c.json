@@ -1,0 +1,149 @@
+{
+  "normal_water": {
+    "available_water_m3": 1531.44,
+    "strategies": {
+      "equal": {
+        "total_allocated": 1197.05,
+        "fairness": {
+          "jains_fairness_index": 0.9668788430688255,
+          "minimum_satisfaction": 0.5764850254949475,
+          "mean_satisfaction": 0.9152970050989895,
+          "allocation_efficiency": 0.9216930100794104,
+          "water_deficit": 101.70110876464832,
+          "allocation_disparity": 0.4235149745050525
+        }
+      },
+      "proportional": {
+        "total_allocated": 1531.44,
+        "fairness": {
+          "jains_fairness_index": 1.0,
+          "minimum_satisfaction": 1.0,
+          "mean_satisfaction": 1.0,
+          "allocation_efficiency": 1.0,
+          "water_deficit": 0.0,
+          "allocation_disparity": 0.0
+        }
+      },
+      "priority": {
+        "total_allocated": 1531.44,
+        "fairness": {
+          "jains_fairness_index": 1.0,
+          "minimum_satisfaction": 1.0,
+          "mean_satisfaction": 1.0,
+          "allocation_efficiency": 1.0,
+          "water_deficit": 0.0,
+          "allocation_disparity": 0.0
+        }
+      },
+      "lp": {
+        "total_allocated": 1531.44,
+        "fairness": {
+          "jains_fairness_index": 1.0,
+          "minimum_satisfaction": 1.0,
+          "mean_satisfaction": 1.0,
+          "allocation_efficiency": 1.0,
+          "water_deficit": 0.0,
+          "allocation_disparity": 0.0
+        }
+      }
+    }
+  },
+  "moderate_shortage": {
+    "available_water_m3": 1007.06,
+    "strategies": {
+      "equal": {
+        "total_allocated": 952.97,
+        "fairness": {
+          "jains_fairness_index": 0.9174977947416723,
+          "minimum_satisfaction": 0.3790909273461199,
+          "mean_satisfaction": 0.8194856160772878,
+          "allocation_efficiency": 0.7337579899411384,
+          "water_deficit": 345.7814896240235,
+          "allocation_disparity": 0.6209090726538802
+        }
+      },
+      "proportional": {
+        "total_allocated": 1007.06,
+        "fairness": {
+          "jains_fairness_index": 1.0,
+          "minimum_satisfaction": 0.7754078419333905,
+          "mean_satisfaction": 0.7754078419333906,
+          "allocation_efficiency": 0.7754078419333906,
+          "water_deficit": 291.6887945556641,
+          "allocation_disparity": 1.1102230246251565e-16
+        }
+      },
+      "priority": {
+        "total_allocated": 1007.06,
+        "fairness": {
+          "jains_fairness_index": 0.48258757528683116,
+          "minimum_satisfaction": 0.0,
+          "mean_satisfaction": 0.44484582103014103,
+          "allocation_efficiency": 0.7754078419333906,
+          "water_deficit": 291.6887945556641,
+          "allocation_disparity": 1.0
+        }
+      },
+      "lp": {
+        "total_allocated": 1007.06,
+        "fairness": {
+          "jains_fairness_index": 0.9063867144094812,
+          "minimum_satisfaction": 0.3717655351687368,
+          "mean_satisfaction": 0.8009448721321956,
+          "allocation_efficiency": 0.7754078419333905,
+          "water_deficit": 291.68879455566423,
+          "allocation_disparity": 0.6282344648312632
+        }
+      }
+    }
+  },
+  "severe_shortage": {
+    "available_water_m3": 687.46,
+    "strategies": {
+      "equal": {
+        "total_allocated": 687.46,
+        "fairness": {
+          "jains_fairness_index": 0.8627267539656897,
+          "minimum_satisfaction": 0.2587828420485012,
+          "mean_satisfaction": 0.6683717577337164,
+          "allocation_efficiency": 0.5293248416335956,
+          "water_deficit": 611.288794555664,
+          "allocation_disparity": 0.7007486980289563
+        }
+      },
+      "proportional": {
+        "total_allocated": 687.46,
+        "fairness": {
+          "jains_fairness_index": 1.0,
+          "minimum_satisfaction": 0.5293248416335956,
+          "mean_satisfaction": 0.5293248416335956,
+          "allocation_efficiency": 0.5293248416335956,
+          "water_deficit": 611.288794555664,
+          "allocation_disparity": 0.0
+        }
+      },
+      "priority": {
+        "total_allocated": 687.46,
+        "fairness": {
+          "jains_fairness_index": 0.383964530755356,
+          "minimum_satisfaction": 0.0,
+          "mean_satisfaction": 0.33212668598307477,
+          "allocation_efficiency": 0.5293248416335956,
+          "water_deficit": 611.288794555664,
+          "allocation_disparity": 1.0
+        }
+      },
+      "lp": {
+        "total_allocated": 687.46,
+        "fairness": {
+          "jains_fairness_index": 0.847392121738358,
+          "minimum_satisfaction": 0.3717655351687368,
+          "mean_satisfaction": 0.6024551555119457,
+          "allocation_efficiency": 0.5293248416335956,
+          "water_deficit": 611.288794555664,
+          "allocation_disparity": 0.6282344648312632
+        }
+      }
+    }
+  }
+}

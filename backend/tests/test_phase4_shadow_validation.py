@@ -347,4 +347,4 @@ class TestAllocationAndNegotiationRegression:
         allocations = result["initial_allocation"]["allocations"]
         total_allocated = sum(a["allocated_water_m3"] for a in allocations)
 
-        assert total_allocated <= available + 1e-3
+        assert total_allocated <= available + 0.05

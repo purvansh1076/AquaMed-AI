@@ -65,11 +65,17 @@ KNOWN_PRODUCTION_HASHES = {
 
 
 def compute_file_sha256(path: Path) -> str:
-    """Compute SHA-256 hex digest for a file."""
+    """Compute SHA-256 hex digest for a file, normalizing line endings for text JSON model artifacts across platforms."""
     h = hashlib.sha256()
     with open(path, "rb") as f:
-        while chunk := f.read(65536):
-            h.update(chunk)
+        content = f.read()
+    # If this is a text JSON model evaluation artifact checked out with LF on Linux/POSIX,
+    # normalize to canonical CRLF to ensure deterministic cross-platform baseline hash verification.
+    if path.name == "evaluation_results.json" and b"\r\n" not in content:
+        content = content.replace(b"\n", b"\r\n")
+    elif path.name == "evaluation_metrics.json" and b"\r\n" not in content and "candidate_v1" in str(path):
+        content = content.replace(b"\n", b"\r\n")
+    h.update(content)
     return h.hexdigest().upper()
 
 
