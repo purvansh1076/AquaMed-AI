@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { ScenarioProvider } from '../context/ScenarioContext';
 import { App } from '../App';
 import { api } from '../services/api';
+import { makeTestJwt, mockExpertIdentity } from './authTestUtils';
 import type { HealthResponse, ScenarioRunResponse } from '../types/api';
 
 const mockHealthResponse: HealthResponse = {
@@ -263,9 +264,9 @@ describe('AquaMediAI Frontend Application Flow', () => {
       'aquamedi_auth_session',
       JSON.stringify({
         role: 'expert',
-        token: 'mock_expert_token_123',
+        token: makeTestJwt(),
         user: {
-          email: 'admin123@aquamedi.gov.in',
+          email: 'expert@aquamedi.gov.in',
           full_name: 'Senior Agricultural Specialist',
           role: 'expert',
           department: 'Agricultural Intelligence',
@@ -273,6 +274,7 @@ describe('AquaMediAI Frontend Application Flow', () => {
       })
     );
     vi.spyOn(api, 'getHealth').mockResolvedValue(mockHealthResponse);
+    vi.spyOn(api, 'getIdentity').mockResolvedValue(mockExpertIdentity());
   });
 
   it('renders application layout with Sidebar and Header', async () => {
@@ -353,7 +355,7 @@ describe('AquaMediAI Frontend Application Flow', () => {
       </MemoryRouter>
     );
 
-    const submitBtn = screen.getByRole('button', { name: /Run AI Mediation/ });
+    const submitBtn = await screen.findByRole('button', { name: /Run AI Mediation/ });
     await user.click(submitBtn);
 
     // After submission, redirects to overview with populated scenario
@@ -365,7 +367,7 @@ describe('AquaMediAI Frontend Application Flow', () => {
     expect(screen.getByText('Total Predicted Demand')).toBeInTheDocument();
   });
 
-  it('renders all pipeline pages properly when requested directly', () => {
+  it('renders all pipeline pages properly when requested directly', async () => {
     // 1. Predictions page
     const { unmount: u1 } = render(
       <MemoryRouter initialEntries={['/predictions']}>
@@ -374,7 +376,7 @@ describe('AquaMediAI Frontend Application Flow', () => {
         </ScenarioProvider>
       </MemoryRouter>
     );
-    expect(screen.getByText('ML Water Demand Predictions')).toBeInTheDocument();
+    expect(await screen.findByText('ML Water Demand Predictions')).toBeInTheDocument();
     u1();
 
     // 2. Allocation page
@@ -385,7 +387,7 @@ describe('AquaMediAI Frontend Application Flow', () => {
         </ScenarioProvider>
       </MemoryRouter>
     );
-    expect(screen.getByText('Water Allocation Optimization')).toBeInTheDocument();
+    expect(await screen.findByText('Water Allocation Optimization')).toBeInTheDocument();
     u2();
 
     // 3. Conflicts page
@@ -396,7 +398,7 @@ describe('AquaMediAI Frontend Application Flow', () => {
         </ScenarioProvider>
       </MemoryRouter>
     );
-    expect(screen.getByText('Conflict Detection Engine')).toBeInTheDocument();
+    expect(await screen.findByText('Conflict Detection Engine')).toBeInTheDocument();
     u3();
 
     // 4. Negotiation page
@@ -407,7 +409,7 @@ describe('AquaMediAI Frontend Application Flow', () => {
         </ScenarioProvider>
       </MemoryRouter>
     );
-    expect(screen.getByText('Multi-Agent Negotiation')).toBeInTheDocument();
+    expect(await screen.findByText('Multi-Agent Negotiation')).toBeInTheDocument();
     u4();
 
     // 5. Explainability page
@@ -418,7 +420,9 @@ describe('AquaMediAI Frontend Application Flow', () => {
         </ScenarioProvider>
       </MemoryRouter>
     );
-    expect(screen.getByText(/Why Did I Get This Much Water|Decision Explanation/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Why Did I Get This Much Water|Decision Explanation/)
+    ).toBeInTheDocument();
     u5();
 
     // 6. Agreement page
@@ -429,7 +433,7 @@ describe('AquaMediAI Frontend Application Flow', () => {
         </ScenarioProvider>
       </MemoryRouter>
     );
-    expect(screen.getByText('Final Mediation Agreement')).toBeInTheDocument();
+    expect(await screen.findByText('Final Mediation Agreement')).toBeInTheDocument();
     u6();
 
     // 7. Debug page
@@ -440,6 +444,8 @@ describe('AquaMediAI Frontend Application Flow', () => {
         </ScenarioProvider>
       </MemoryRouter>
     );
-    expect(screen.getByText('Developer & Academic Verification View')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Developer & Academic Verification View')
+    ).toBeInTheDocument();
   });
 });

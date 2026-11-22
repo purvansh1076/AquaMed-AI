@@ -47,9 +47,10 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture(scope="module")
 def client():
-    """Create a TestClient for the FastAPI app."""
+    """Create a TestClient for the FastAPI app with a valid expert token."""
     from app.main import app
-    return TestClient(app, raise_server_exceptions=False)
+    from tests.auth_helpers import expert_headers
+    return TestClient(app, raise_server_exceptions=False, headers=expert_headers())
 
 
 @pytest.fixture(scope="module")

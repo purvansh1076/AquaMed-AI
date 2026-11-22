@@ -131,25 +131,44 @@ def test_auth_me_with_guest_and_expert(client):
     assert me_expert.json()["is_authenticated"] is True
 
 
-def test_expert_login_prototype_credentials(client):
-    """Verify that admin123 and 12345678 work for prototype login, and bad password is rejected."""
-    # 1. Success
+def test_prototype_credentials_are_rejected(client):
+    """The former admin123/12345678 prototype path must not authenticate."""
     res = client.post("/api/v1/auth/expert/login", json={
         "username_or_email": "admin123",
         "password": "12345678",
     })
-    assert res.status_code == 200
-    data = res.json()
-    assert data["role"] == "expert"
-    assert "access_token" in data
-    assert data["user"]["email"] == "admin123@aquamedi.gov.in"
+    assert res.status_code == 401
 
-    # 2. Rejection with bad password
-    bad_res = client.post("/api/v1/auth/expert/login", json={
-        "username_or_email": "admin123",
-        "password": "wrongpassword99",
+
+def test_protected_endpoint_without_token_returns_401(client):
+    """No-token access to a protected endpoint must fail in the testing env."""
+    res = client.get("/api/v1/weather/current?lat=19.0948&lon=74.7480")
+    assert res.status_code == 401
+
+
+def test_iot_ingest_without_device_key_returns_401(client):
+    res = client.post("/api/v1/iot/telemetry", json={
+        "device_id": "NO_KEY_NODE",
+        "farmer_id": "F001",
+        "soil_moisture_pct": 40.0,
+        "soil_temp_c": 25.0,
+        "battery_mv": 3300,
     })
-    assert bad_res.status_code == 401
+    assert res.status_code == 401
+
+
+def test_logout_revokes_token(client):
+    settings = get_settings()
+    login = client.post("/api/v1/auth/expert/login", json={
+        "username_or_email": settings.expert_default_email,
+        "password": settings.expert_default_password,
+    })
+    assert login.status_code == 200
+    token = login.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    assert client.post("/api/v1/auth/logout", headers=headers).status_code == 200
+    assert client.get("/api/v1/auth/me", headers=headers).status_code == 401
 
 
 # ─── RBAC Access Control Tests ───────────────────────────────────────────────

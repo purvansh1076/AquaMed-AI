@@ -21,7 +21,7 @@ import type { Language } from '../i18n/translations';
 export const MainLayout: React.FC = () => {
   const { healthStatus, error, clearError } = useScenario();
   const { viewMode, setViewMode, language, setLanguage, t } = useViewMode();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, offline } = useAuth();
   const location = useLocation();
 
   // Sidebar interactive state (persisted across sessions)
@@ -196,7 +196,7 @@ export const MainLayout: React.FC = () => {
         {/* Farmer Content */}
         <main className="app-content">
           <div className="content-container farmer-container">
-            {healthStatus === 'offline' && (
+            {(healthStatus === 'offline' || offline) && (
               <AlertBox
                 type="error"
                 title="Backend Disconnected"
@@ -248,7 +248,7 @@ export const MainLayout: React.FC = () => {
         />
         <main className="app-content">
           <div className="content-container">
-            {healthStatus === 'offline' && (
+            {(healthStatus === 'offline' || offline) && (
               <AlertBox
                 type="error"
                 title="Backend Disconnected"

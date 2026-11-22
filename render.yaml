@@ -31,6 +31,8 @@ services:
         sync: false
       - key: EXPERT_DEFAULT_PASSWORD
         sync: false
+      - key: IOT_API_KEY
+        sync: false
 
 databases:
   - name: aquamedi-ai-db

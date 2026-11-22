@@ -24,6 +24,7 @@ from app.core.security import (
     create_access_token,
     hash_password,
     login_rate_limiter,
+    revoke_token,
     verify_password,
 )
 from app.database import check_db_connection
@@ -166,18 +167,9 @@ def expert_login(
     department = "Department of Agriculture & Water Resources"
     target_email = settings.expert_default_email.lower()
 
-    if identifier in {target_email, "expert", "admin", "expert@aquamedi.gov.in", "admin123"}:
-        # Compare with configured expert password or prototype admin123 credentials (if dev credentials enabled)
+    if identifier in {target_email, "expert", "admin"}:
         expected_pwd = settings.expert_default_password
-        if identifier == "admin123" and payload.password == "12345678":
-            if getattr(settings, "enable_dev_demo_credentials", False):
-                is_valid = True
-                target_email = "admin123@aquamedi.gov.in"
-                full_name = "Senior Agricultural Specialist (Admin)"
-                department = "Agricultural Intelligence"
-            else:
-                logger.warning("Prototype credentials rejected: enable_dev_demo_credentials is False")
-        elif hmac.compare_digest(payload.password, expected_pwd):
+        if expected_pwd and hmac.compare_digest(payload.password, expected_pwd):
             is_valid = True
 
     # 3. Check database if connected
@@ -197,6 +189,8 @@ def expert_login(
                         target_email = user.email
                         full_name = user.full_name
                         department = user.department or department
+                        user.last_login = datetime.now(timezone.utc)
+                        db.commit()
         except Exception as exc:
             logger.warning("Database user lookup error: %s", exc)
 
@@ -298,7 +292,8 @@ def get_current_user_profile(
 def logout_user(
     identity: Dict[str, Any] = Depends(get_current_identity),
 ) -> Dict[str, str]:
-    """Client clears token. Server confirms termination."""
+    """Revoke the current token (in-memory denylist) and confirm termination."""
+    revoke_token(identity.get("jti"), expires_at=identity.get("exp"))
     logger.info("Session terminated for: %s", identity.get("sub"))
     return {"status": "success", "message": "Logged out successfully."}
 

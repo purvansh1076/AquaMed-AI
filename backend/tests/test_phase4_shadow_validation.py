@@ -29,7 +29,8 @@ from app.services.scenario_service import ScenarioService
 
 @pytest.fixture(scope="module")
 def api_client() -> TestClient:
-    return TestClient(app)
+    from tests.auth_helpers import expert_headers
+    return TestClient(app, headers=expert_headers())
 
 
 @pytest.fixture(scope="module")

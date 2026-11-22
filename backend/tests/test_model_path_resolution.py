@@ -19,6 +19,7 @@ from fastapi.testclient import TestClient
 
 from app.config import BACKEND_DIR, Settings, get_settings
 from app.services.scenario_service import ScenarioService, clear_predictor_cache
+from tests.auth_helpers import expert_headers
 
 
 @pytest.fixture(autouse=True)
@@ -96,7 +97,7 @@ def test_health_check_reports_pipeline_available_from_any_cwd(tmp_path, monkeypa
     monkeypatch.chdir(tmp_path)
     from app.main import app
 
-    client = TestClient(app)
+    client = TestClient(app, headers=expert_headers())
     resp = client.get("/api/v1/health")
     assert resp.status_code == 200
     data = resp.json()
@@ -154,7 +155,7 @@ def test_api_predict_respects_model_selection():
     """Verify /api/v1/predict returns correct model_name for both RandomForest and XGBoost."""
     from app.main import app
 
-    client = TestClient(app)
+    client = TestClient(app, headers=expert_headers())
     sample_farmer = {
         "farmer_id": "test_api_farmer",
         "crop_type": "wheat",

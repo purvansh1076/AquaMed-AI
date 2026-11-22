@@ -12,7 +12,8 @@ from app.main import app
 
 @pytest.fixture(scope="module")
 def client():
-    return TestClient(app)
+    from tests.auth_helpers import guest_headers
+    return TestClient(app, headers=guest_headers())
 
 
 @pytest.fixture(scope="module")

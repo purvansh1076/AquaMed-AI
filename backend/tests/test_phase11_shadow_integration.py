@@ -38,6 +38,7 @@ from app.ml.candidate_v3_shadow_adapter import (
 )
 from app.ml.predictor import WaterDemandPredictor
 from app.services.scenario_service import ScenarioService
+from tests.auth_helpers import expert_headers
 
 
 @pytest.fixture
@@ -275,7 +276,7 @@ def test_shadow_failures_never_break_primary_prediction(sample_farmer_data: Dict
 
 def test_api_prediction_endpoint_with_shadow_disabled(sample_farmer_data: Dict[str, Any]):
     """POST /api/v1/predictions with shadow disabled returns valid schema with null shadow fields."""
-    client = TestClient(app)
+    client = TestClient(app, headers=expert_headers())
     payload = {
         "farmer_data": sample_farmer_data,
         "model_name": "XGBoost",
@@ -293,7 +294,7 @@ def test_api_prediction_endpoint_with_shadow_enabled(sample_farmer_data: Dict[st
     with patch.dict(os.environ, {"ENABLE_CANDIDATE_V3_SHADOW": "true"}):
         get_settings.cache_clear()
         try:
-            client = TestClient(app)
+            client = TestClient(app, headers=expert_headers())
             payload = {
                 "farmer_data": sample_farmer_data,
                 "model_name": "XGBoost",
@@ -314,7 +315,7 @@ def test_api_batch_prediction_endpoint_with_shadow(sample_farmer_data: Dict[str,
     with patch.dict(os.environ, {"ENABLE_CANDIDATE_V3_SHADOW": "true"}):
         get_settings.cache_clear()
         try:
-            client = TestClient(app)
+            client = TestClient(app, headers=expert_headers())
             farmer2 = copy.deepcopy(sample_farmer_data)
             farmer2["farmer_id"] = "FARMER_TEST_12"
             farmer2["crop_type"] = "cotton"

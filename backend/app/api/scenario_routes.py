@@ -74,6 +74,7 @@ def compute_quick_et0(
     elevation: float = 540.0,
     lat: float = 19.0948,
     day_of_year: int = 180,
+    _identity: Dict[str, Any] = Depends(require_farmer_or_expert),
 ) -> Dict[str, Any]:
     from app.data.fao56_penman_monteith import calculate_fao56_et0
 

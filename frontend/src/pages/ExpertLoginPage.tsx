@@ -1,8 +1,7 @@
 /**
- * AquaMedi AI — Agricultural Expert Authentication Page (Premium Redesign)
- * =========================================================================
- * Secure login portal with government-grade visual identity, demo credentials
- * display, and offline fallback authentication.
+ * AquaMedi AI — Agricultural Expert Authentication Page
+ * =====================================================
+ * Secure login portal for authorized agricultural personnel.
  */
 
 import React, { useState } from 'react';
@@ -130,7 +129,7 @@ export const ExpertLoginPage: React.FC = () => {
                   className="login-input-v2"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="admin123"
+                  placeholder="officer@dept.gov.in"
                   autoComplete="username"
                   required
                 />
@@ -167,14 +166,6 @@ export const ExpertLoginPage: React.FC = () => {
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
-              </div>
-            </div>
-
-            {/* Demo Credentials */}
-            <div className="login-demo-box">
-              <div className="login-demo-box-title">🔑 Demo Credentials (Prototype)</div>
-              <div className="login-demo-creds">
-                Username: <strong>admin123</strong> &nbsp;|&nbsp; Password: <strong>12345678</strong>
               </div>
             </div>
 

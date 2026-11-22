@@ -33,6 +33,7 @@ from app.ml.candidate_v3_shadow_adapter import (
     RainfallInputMode,
 )
 from app.services.scenario_service import ScenarioService
+from tests.auth_helpers import expert_headers
 
 
 @pytest.fixture
@@ -65,7 +66,7 @@ def smoke_farmer_payload() -> Dict[str, Any]:
 
 def test_task1_health_endpoints():
     """Verify backend startup and health endpoints."""
-    client = TestClient(app)
+    client = TestClient(app, headers=expert_headers())
     r1 = client.get("/health")
     assert r1.status_code == 200
     assert r1.json()["status"] == "healthy"
@@ -78,7 +79,7 @@ def test_task1_health_endpoints():
 
 def test_task2_prediction_endpoint_shadow_disabled_default(smoke_farmer_payload: Dict[str, Any]):
     """Verify existing prediction endpoint with shadow mode disabled; normal behavior unchanged."""
-    client = TestClient(app)
+    client = TestClient(app, headers=expert_headers())
     payload = {
         "farmer_data": smoke_farmer_payload,
         "model_name": "XGBoost",
@@ -99,7 +100,7 @@ def test_task3a_historical_prediction_with_shadow_enabled(smoke_farmer_payload: 
     with patch.dict(os.environ, {"ENABLE_CANDIDATE_V3_SHADOW": "true"}):
         get_settings.cache_clear()
         try:
-            client = TestClient(app)
+            client = TestClient(app, headers=expert_headers())
             data = copy.deepcopy(smoke_farmer_payload)
             data["rainfall_input_mode"] = "observed_historical"
             data["rainfall_observed_mm"] = 12.0
@@ -131,7 +132,7 @@ def test_task3b_forward_prediction_with_weather_forecast(smoke_farmer_payload: D
     with patch.dict(os.environ, {"ENABLE_CANDIDATE_V3_SHADOW": "true"}):
         get_settings.cache_clear()
         try:
-            client = TestClient(app)
+            client = TestClient(app, headers=expert_headers())
             data = copy.deepcopy(smoke_farmer_payload)
             data["rainfall_input_mode"] = "forecast_forward"
             data["rainfall_forecast_mm"] = 4.5
@@ -187,7 +188,7 @@ def test_task3e_shadow_failure_never_breaks_primary_prediction(smoke_farmer_payl
     with patch.dict(os.environ, {"ENABLE_CANDIDATE_V3_SHADOW": "true"}):
         get_settings.cache_clear()
         try:
-            client = TestClient(app)
+            client = TestClient(app, headers=expert_headers())
             with patch.object(
                 CandidateV3ShadowAdapter,
                 "evaluate_shadow",

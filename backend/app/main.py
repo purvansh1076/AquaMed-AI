@@ -7,11 +7,11 @@ Registers routers, middleware, lifespan events, and health endpoints.
 from __future__ import annotations
 
 import logging
-import logging.config
+import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -60,6 +60,8 @@ async def lifespan(app: FastAPI):
 
 # ─── FastAPI App ──────────────────────────────────────────────────────────────
 
+_docs_enabled = settings.app_env != "production"
+
 app = FastAPI(
     title="AquaMediAI API",
     description=(
@@ -68,9 +70,9 @@ app = FastAPI(
         "academic demonstration purposes. No real farmer data is used."
     ),
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
+    docs_url="/docs" if _docs_enabled else None,
+    redoc_url="/redoc" if _docs_enabled else None,
+    openapi_url="/openapi.json" if _docs_enabled else None,
     lifespan=lifespan,
 )
 
@@ -79,7 +81,6 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
-    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -90,7 +91,6 @@ app.add_middleware(
 
 @app.middleware("http")
 async def add_correlation_id_middleware(request: Request, call_next):
-    import uuid
     correlation_id = request.headers.get("X-Correlation-ID", str(uuid.uuid4()))
     response = await call_next(request)
     response.headers["X-Correlation-ID"] = correlation_id

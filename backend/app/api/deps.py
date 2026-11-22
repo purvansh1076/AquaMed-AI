@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, Optional
 
-from fastapi import Depends, Header, HTTPException, Request, status
+from fastapi import Depends, Header, HTTPException, status
 
 from app.config import get_settings
 from app.core.security import decode_access_token
@@ -39,37 +39,26 @@ def _extract_token(
 
 
 def get_current_identity(
-    request: Request,
     token: Optional[str] = Depends(_extract_token),
 ) -> Dict[str, Any]:
     """
     Validate the token and resolve caller identity and role.
-    If in production or token provided: strictly validates.
+
+    A valid token is required in every environment. There is no development or
+    test authentication bypass.
     """
     settings = get_settings()
 
     if not token:
-        # In production mode, require token strictly
-        if settings.app_env == "production":
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail={
-                    "error": "unauthorized",
-                    "detail": "Authentication credentials required. Continue as Farmer (Guest) or Sign in as Expert.",
-                    "status_code": 401,
-                },
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        # Development / test fallback when no token provided:
-        return {
-            "sub": "dev_expert_default",
-            "role": "expert",
-            "email": settings.expert_default_email,
-            "full_name": settings.expert_default_name,
-            "department": "Department of Agriculture",
-            "permissions": ["farmer:*", "expert:*", "admin:*"],
-            "is_default_dev": True,
-        }
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "error": "unauthorized",
+                "detail": "Authentication credentials required. Continue as Farmer (Guest) or Sign in as Expert.",
+                "status_code": 401,
+            },
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     payload = decode_access_token(token, settings.jwt_secret_key)
     if not payload:

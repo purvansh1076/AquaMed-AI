@@ -19,6 +19,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isFarmerGuest: boolean;
   isLoading: boolean;
+  offline: boolean;
   authError: string | null;
   clearAuthError: () => void;
   continueAsFarmer: () => Promise<void>;
@@ -30,34 +31,110 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AUTH_STORAGE_KEY = 'aquamedi_auth_session';
 
+/**
+ * Decode a JWT payload and determine whether it is expired or malformed.
+ * This is only a local convenience check; the backend remains authoritative.
+ */
+function isTokenExpired(token: string): boolean {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return true;
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+    const payload = JSON.parse(atob(padded)) as { exp?: unknown };
+    if (typeof payload.exp !== 'number') return true;
+    return payload.exp * 1000 <= Date.now();
+  } catch {
+    return true;
+  }
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [role, setRole] = useState<UserRole>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [guestSession, setGuestSession] = useState<GuestSessionResponse | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [offline, setOffline] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Rehydrate saved session on load
-  useEffect(() => {
+  const clearSession = () => {
+    setRole(null);
+    setToken(null);
+    setUser(null);
+    setGuestSession(null);
+    api.setAuthToken(null);
     try {
-      const savedRaw = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (savedRaw) {
-        const saved = JSON.parse(savedRaw);
-        if (saved.token) {
-          api.setAuthToken(saved.token);
-          setToken(saved.token);
-          setRole(saved.role || null);
-          setUser(saved.user || null);
-          setGuestSession(saved.guestSession || null);
-        }
-      }
-    } catch {
-      // Storage parsing failed, clear
       localStorage.removeItem(AUTH_STORAGE_KEY);
-    } finally {
-      setIsLoading(false);
+    } catch {
+      // Storage unavailable
     }
+  };
+
+  // Rehydrate saved session on load, rejecting expired or malformed tokens.
+  useEffect(() => {
+    let cancelled = false;
+
+    const rehydrate = async () => {
+      try {
+        const savedRaw = localStorage.getItem(AUTH_STORAGE_KEY);
+        if (!savedRaw) {
+          // Drop any stale token left over from an earlier partial session.
+          api.setAuthToken(null);
+          return;
+        }
+
+        const saved = JSON.parse(savedRaw) as {
+          token?: string;
+          role?: UserRole;
+          user?: UserProfile | null;
+          guestSession?: GuestSessionResponse | null;
+        };
+
+        if (!saved.token || isTokenExpired(saved.token)) {
+          clearSession();
+          return;
+        }
+
+        api.setAuthToken(saved.token);
+        if (cancelled) return;
+        setToken(saved.token);
+        setRole(saved.role || null);
+        setUser(saved.user || null);
+        setGuestSession(saved.guestSession || null);
+
+        // Validate the session against the backend (the authority). The
+        // backend-resolved role overrides whatever localStorage claimed, so a
+        // tampered saved role cannot escalate UI privileges.
+        try {
+          const identity = await api.getIdentity();
+          if (cancelled) return;
+          if (identity.role === 'expert' || identity.role === 'admin') {
+            setRole('expert');
+          } else if (identity.role === 'farmer_guest') {
+            setRole('farmer_guest');
+          } else {
+            clearSession();
+          }
+        } catch (err: unknown) {
+          const statusCode = (err as { statusCode?: number }).statusCode;
+          if (statusCode === 401) {
+            clearSession();
+          } else {
+            setOffline(true);
+          }
+        }
+      } catch {
+        clearSession();
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    void rehydrate();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const persistSession = (
@@ -70,6 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(newToken);
     setUser(newUser);
     setGuestSession(newGuest);
+    setOffline(false);
     api.setAuthToken(newToken);
 
     try {
@@ -96,24 +174,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const continueAsFarmer = async (): Promise<void> => {
     setIsLoading(true);
     setAuthError(null);
+    setOffline(false);
     try {
-      // Request guest session from backend
       const session = await api.createGuestSession();
       persistSession('farmer_guest', session.access_token, null, session);
     } catch (err: unknown) {
-      // Graceful offline fallback: create client-side guest session so farmer is never blocked
-      const fallbackToken = `guest_offline_${Date.now()}`;
-      const fallbackSession: GuestSessionResponse = {
-        access_token: fallbackToken,
-        token_type: 'bearer',
-        role: 'farmer_guest',
-        session_id: `guest_local_${Date.now().toString(36)}`,
-        display_name: 'Farmer Guest',
-        permissions: ['farmer:read', 'farmer:predict'],
-        expires_in_seconds: 86400,
-      };
-      persistSession('farmer_guest', fallbackToken, null, fallbackSession);
-      console.warn('Backend offline; initialized offline guest farmer session');
+      // Do not invent an offline session. Surface the failure and let the
+      // existing backend-disconnected banner explain the state.
+      const msg = err instanceof Error ? err.message : 'Unable to start a farmer session.';
+      setAuthError(msg);
+      setOffline(true);
     } finally {
       setIsLoading(false);
     }
@@ -122,6 +192,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginAsExpert = async (usernameOrEmail: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     setAuthError(null);
+    setOffline(false);
     try {
       const response = await api.loginExpert({
         username_or_email: usernameOrEmail,
@@ -130,21 +201,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       persistSession('expert', response.access_token, response.user, null);
       return true;
     } catch (err: unknown) {
-      // Demo credential fallback for prototype in development/test environments only
-      const isDevOrTest = import.meta.env.DEV || import.meta.env.MODE === 'test';
-      if (isDevOrTest && usernameOrEmail === 'admin123' && password === '12345678') {
-        const demoToken = `demo_expert_${Date.now()}`;
-        const demoUser = {
-          email: 'admin123@aquamedi.gov.in',
-          full_name: 'Demo Expert Admin (Development)',
-          role: 'expert' as const,
-          department: 'Agricultural Intelligence',
-        };
-        persistSession('expert', demoToken, demoUser, null);
-        return true;
-      }
       const msg = err instanceof Error ? err.message : 'Invalid expert credentials';
       setAuthError(msg);
+      const statusCode = (err as { statusCode?: number }).statusCode;
+      if (!statusCode || statusCode === 0) setOffline(true);
       return false;
     } finally {
       setIsLoading(false);
@@ -158,7 +218,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await api.logout().catch(() => {});
       }
     } finally {
-      persistSession(null, null, null, null);
+      clearSession();
+      setOffline(false);
       setIsLoading(false);
     }
   };
@@ -176,6 +237,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated,
         isFarmerGuest,
         isLoading,
+        offline,
         authError,
         clearAuthError,
         continueAsFarmer,
@@ -195,4 +257,3 @@ export function useAuth(): AuthContextType {
   }
   return context;
 }
-

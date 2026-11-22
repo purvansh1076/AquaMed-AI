@@ -50,6 +50,7 @@ class ConformalIntervalRequest(BaseModel):
 def get_current_weather(
     lat: float = Query(19.0948, description="Latitude"),
     lon: float = Query(74.7480, description="Longitude"),
+    _identity: Dict[str, Any] = Depends(require_farmer_or_expert),
 ) -> Dict[str, Any]:
     return weather_service.get_current_and_forecast(lat=lat, lon=lon)
 

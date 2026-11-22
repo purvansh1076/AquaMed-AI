@@ -12,7 +12,10 @@ from app.main import app
 
 @pytest.fixture(scope="module")
 def client():
-    return TestClient(app)
+    from tests.auth_helpers import guest_headers
+    headers = guest_headers()
+    headers["X-Device-Key"] = "test_device_key"
+    return TestClient(app, headers=headers)
 
 
 def test_iot_telemetry_ingest(client):

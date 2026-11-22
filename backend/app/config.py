@@ -35,22 +35,24 @@ class Settings(BaseSettings):
 
     # ── Application ────────────────────────────────────────────────────────────
     app_env: str = "development"
-    app_debug: bool = True
+    app_debug: bool = False
     app_host: str = "0.0.0.0"
     app_port: int = 8000
     secret_key: str = "CHANGE_ME_IN_PRODUCTION"
 
     # ── Authentication & Security ──────────────────────────────────────────────
-    jwt_secret_key: str = "aquamedi_government_grade_secret_key_2026_secure_key"
+    # Required from the environment (or backend/.env). No embedded JWT secret.
+    jwt_secret_key: str = ""
     jwt_algorithm: str = "HS256"
     jwt_expire_hours: int = 8
     guest_session_expire_hours: int = 24
     expert_default_email: str = "expert@aquamedi.gov.in"
-    expert_default_password: str = "AQM-GovSec-2026!k9Xv#mP4"
+    expert_default_password: str = ""
     expert_default_name: str = "Senior Agricultural Specialist"
     auth_rate_limit_max_attempts: int = 5
     auth_rate_limit_lockout_seconds: int = 900
-    enable_dev_demo_credentials: bool = True
+    # Shared key for IoT telemetry ingestion. Empty means ingestion is disabled.
+    iot_api_key: str = ""
 
     # ── Database ───────────────────────────────────────────────────────────────
     # Required from the environment (or backend/.env). No embedded credentials.
@@ -158,6 +160,16 @@ class Settings(BaseSettings):
             raise ValueError(
                 "DATABASE_URL is required. Set it in the environment or backend/.env "
                 "(for example: postgresql+psycopg2://user:password@localhost:5432/dbname)."
+            )
+        return v.strip()
+
+    @field_validator("jwt_secret_key")
+    @classmethod
+    def validate_jwt_secret_key(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError(
+                "JWT_SECRET_KEY is required in every environment. "
+                "Set it in the environment or backend/.env."
             )
         return v.strip()
 

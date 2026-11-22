@@ -10,8 +10,9 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
+from app.api.deps import require_farmer_or_expert
 from app.services.remote_sensing import remote_sensing_service
 
 router = APIRouter(prefix="/spatial", tags=["Spatial & Remote Sensing"])
@@ -26,6 +27,7 @@ def get_satellite_indices(
     lat: float = Query(19.0948, description="Latitude"),
     lon: float = Query(74.7480, description="Longitude"),
     crop_type: str = Query("sugarcane", description="Target crop"),
+    _identity: Dict[str, Any] = Depends(require_farmer_or_expert),
 ) -> Dict[str, Any]:
     return remote_sensing_service.get_parcel_indices(lat=lat, lon=lon, crop_type=crop_type)
 
@@ -35,5 +37,7 @@ def get_satellite_indices(
     summary="Get GeoJSON canal network topology",
     description="Returns canal distributaries, sluice gates, and head-to-tail farm nodes with conveyance loss coefficients.",
 )
-def get_canal_network() -> Dict[str, Any]:
+def get_canal_network(
+    _identity: Dict[str, Any] = Depends(require_farmer_or_expert),
+) -> Dict[str, Any]:
     return remote_sensing_service.get_canal_network_topology()

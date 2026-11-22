@@ -48,8 +48,9 @@ from app.ml.dataset_builder import (
     calculate_net_crop_water_target,
 )
 from app.ml.date_grouped_split import date_grouped_chronological_split
+from tests.auth_helpers import expert_headers
 
-client = TestClient(app)
+client = TestClient(app, headers=expert_headers())
 
 
 # ── 1. Unit Conversions & Depth to Volume ───────────────────────────────────────
