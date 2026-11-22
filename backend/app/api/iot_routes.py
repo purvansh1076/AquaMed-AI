@@ -71,7 +71,10 @@ def ingest_telemetry(
             timestamp=payload.timestamp,
         )
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
+        raise HTTPException(
+            status_code=422,
+            detail={"error": "invalid_telemetry", "detail": str(exc), "status_code": 422},
+        )
 
 
 @router.get(
@@ -84,7 +87,10 @@ def get_latest_telemetry(
 ) -> Dict[str, Any]:
     data = iot_telemetry_service.get_latest_telemetry(device_id)
     if not data:
-        raise HTTPException(status_code=404, detail=f"No telemetry found for device: {device_id}")
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "detail": f"No telemetry found for device: {device_id}", "status_code": 404},
+        )
     return data
 
 
@@ -98,4 +104,10 @@ def simulate_diurnal_curve(
     base_moisture: float = Query(48.0, ge=10.0, le=90.0, description="Baseline moisture percentage"),
     _identity: Dict[str, Any] = Depends(require_farmer_or_expert),
 ) -> Dict[str, Any]:
-    return iot_telemetry_service.simulate_diurnal_curve(farmer_id=farmer_id, base_moisture=base_moisture)
+    try:
+        return iot_telemetry_service.simulate_diurnal_curve(farmer_id=farmer_id, base_moisture=base_moisture)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail={"error": "simulation_error", "detail": str(exc), "status_code": 500},
+        )

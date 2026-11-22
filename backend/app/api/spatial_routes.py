@@ -24,8 +24,8 @@ router = APIRouter(prefix="/spatial", tags=["Spatial & Remote Sensing"])
     description="Returns surface reflectance, NDVI, NDWI, and satellite-calibrated crop coefficient Kc.",
 )
 def get_satellite_indices(
-    lat: float = Query(19.0948, description="Latitude"),
-    lon: float = Query(74.7480, description="Longitude"),
+    lat: float = Query(19.0948, ge=-90.0, le=90.0, description="Latitude"),
+    lon: float = Query(74.7480, ge=-180.0, le=180.0, description="Longitude"),
     crop_type: str = Query("sugarcane", description="Target crop"),
     _identity: Dict[str, Any] = Depends(require_farmer_or_expert),
 ) -> Dict[str, Any]:

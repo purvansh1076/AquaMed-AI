@@ -8,12 +8,13 @@ for Ahmednagar district (Central Maharashtra, India).
 
 from __future__ import annotations
 
+import json
 import logging
 import time
-from datetime import datetime, timezone
+from collections import OrderedDict
+from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 import urllib.request
-import json
 
 logger = logging.getLogger(__name__)
 
@@ -23,14 +24,16 @@ AHMEDNAGAR_ELEVATION_M = 540.0
 
 # 30-minute cache TTL
 WEATHER_CACHE_TTL_SECONDS = 1800
+# Cap the in-memory cache to avoid unbounded growth.
+WEATHER_CACHE_MAX_KEYS = 100
 
 
 class WeatherService:
     """Service providing real-time and forecast agro-weather intelligence."""
 
     def __init__(self) -> None:
-        self._cache: Dict[str, Any] = {}
-        self._last_fetched: float = 0.0
+        self._cache: "OrderedDict[str, Dict[str, Any]]" = OrderedDict()
+        self._last_fetched: Dict[str, float] = {}
 
     def get_current_and_forecast(
         self,
@@ -45,7 +48,8 @@ class WeatherService:
         now = time.monotonic()
         cache_key = f"{round(lat, 4)}_{round(lon, 4)}"
 
-        if cache_key in self._cache and (now - self._last_fetched) < WEATHER_CACHE_TTL_SECONDS:
+        if cache_key in self._cache and (now - self._last_fetched.get(cache_key, 0.0)) < WEATHER_CACHE_TTL_SECONDS:
+            self._cache.move_to_end(cache_key)
             logger.debug("Serving weather intelligence from cache for %s", cache_key)
             return self._cache[cache_key]
 
@@ -96,7 +100,11 @@ class WeatherService:
             }
 
             self._cache[cache_key] = result
-            self._last_fetched = now
+            self._cache.move_to_end(cache_key)
+            self._last_fetched[cache_key] = now
+            if len(self._cache) > WEATHER_CACHE_MAX_KEYS:
+                oldest_key, _ = self._cache.popitem(last=False)
+                self._last_fetched.pop(oldest_key, None)
             return result
 
         except Exception as exc:
@@ -105,8 +113,20 @@ class WeatherService:
 
     def _get_regional_baseline(self, lat: float, lon: float, elevation_m: float) -> Dict[str, Any]:
         """Provides verified meteorological averages for Ahmednagar agro-ecological zone."""
+        today = date.today()
+        forecast = []
+        for i in range(7):
+            d = today + timedelta(days=i)
+            forecast.append({
+                "date": d.isoformat(),
+                "temp_max_c": 32.5 + (i % 3) * 0.3,
+                "temp_min_c": 19.8 + (i % 2) * 0.4,
+                "rain_prob_pct": 5 + (i % 4) * 5,
+                "rain_sum_mm": 0.0 if i % 3 else 0.5,
+                "fao_et0_mm": 4.6 + (i % 3) * 0.1,
+            })
         return {
-            "source": "Ahmednagar Regional Agroclimatic Baseline (IMD Normals)",
+            "source": "Simulated regional agroclimatic baseline (not live IMD data)",
             "is_live": False,
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "location": {
@@ -122,15 +142,7 @@ class WeatherService:
                 "precipitation_mm": 0.0,
                 "pressure_kpa": 95.4,
             },
-            "forecast_7day": [
-                {"date": "2026-11-07", "temp_max_c": 32.5, "temp_min_c": 19.8, "rain_prob_pct": 5, "rain_sum_mm": 0.0, "fao_et0_mm": 4.6},
-                {"date": "2026-11-08", "temp_max_c": 33.0, "temp_min_c": 20.1, "rain_prob_pct": 10, "rain_sum_mm": 0.0, "fao_et0_mm": 4.7},
-                {"date": "2026-11-09", "temp_max_c": 32.8, "temp_min_c": 20.5, "rain_prob_pct": 15, "rain_sum_mm": 0.5, "fao_et0_mm": 4.5},
-                {"date": "2026-11-10", "temp_max_c": 31.9, "temp_min_c": 19.4, "rain_prob_pct": 10, "rain_sum_mm": 0.0, "fao_et0_mm": 4.4},
-                {"date": "2026-11-11", "temp_max_c": 32.2, "temp_min_c": 19.0, "rain_prob_pct": 5, "rain_sum_mm": 0.0, "fao_et0_mm": 4.5},
-                {"date": "2026-11-12", "temp_max_c": 33.1, "temp_min_c": 19.5, "rain_prob_pct": 5, "rain_sum_mm": 0.0, "fao_et0_mm": 4.8},
-                {"date": "2026-11-13", "temp_max_c": 33.4, "temp_min_c": 20.0, "rain_prob_pct": 5, "rain_sum_mm": 0.0, "fao_et0_mm": 4.9},
-            ],
+            "forecast_7day": forecast,
         }
 
 

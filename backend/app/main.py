@@ -12,11 +12,14 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import get_settings
-from app.database import check_db_connection
+from app.database import check_db_connection, engine
+from app.version import __version__
 
 # ─── Logging setup ────────────────────────────────────────────────────────────
 settings = get_settings()
@@ -56,6 +59,7 @@ async def lifespan(app: FastAPI):
     yield  # Application runs here
 
     logger.info("AquaMediAI backend shutting down.")
+    engine.dispose()
 
 
 # ─── FastAPI App ──────────────────────────────────────────────────────────────
@@ -69,7 +73,7 @@ app = FastAPI(
         "**IMPORTANT**: All data in this system is synthetically generated for "
         "academic demonstration purposes. No real farmer data is used."
     ),
-    version="1.0.0",
+    version=__version__,
     docs_url="/docs" if _docs_enabled else None,
     redoc_url="/redoc" if _docs_enabled else None,
     openapi_url="/openapi.json" if _docs_enabled else None,
@@ -87,7 +91,31 @@ app.add_middleware(
 )
 
 
-# ─── Correlation ID Middleware ────────────────────────────────────────────────
+# ─── Global error handlers ─────────────────────────────────────────────────────
+@app.exception_handler(RequestValidationError)
+async def request_validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": "validation_error",
+            "detail": jsonable_encoder(exc.errors()),
+            "status_code": 422,
+        },
+    )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled exception for %s %s", request.method, request.url.path)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "internal_error",
+            "detail": "An unexpected internal error occurred.",
+            "status_code": 500,
+            "correlation_id": request.headers.get("X-Correlation-ID"),
+        },
+    )
 
 @app.middleware("http")
 async def add_correlation_id_middleware(request: Request, call_next):
@@ -124,7 +152,7 @@ def health_check() -> JSONResponse:
     Does not fail cloud liveness probes when optional database is unconfigured.
     """
     model_dir = settings.model_dir_path
-    pipeline_ok = (model_dir / "encoders.joblib").exists() or (model_dir / "rf_model.joblib").exists()
+    pipeline_ok = (model_dir / "encoders.joblib").exists() or (model_dir / "rf_model.joblib").exists() or (model_dir / "xgb_model.joblib").exists()
     db_ok = check_db_connection()
     status_code = 200 if pipeline_ok else 503
     return JSONResponse(
@@ -132,7 +160,7 @@ def health_check() -> JSONResponse:
         content={
             "status": "healthy" if pipeline_ok else "degraded",
             "service": "AquaMediAI API",
-            "version": "1.0.0",
+            "version": __version__,
             "environment": settings.app_env,
             "pipeline": "available" if pipeline_ok else "degraded",
             "database": "connected" if db_ok else "not_configured",
@@ -154,7 +182,7 @@ def root() -> dict:
         "health": "/api/v1/health",
         "redoc": "/redoc",
         "openapi": "/openapi.json",
-        "version": "1.0.0",
+        "version": __version__,
         "api_base": "/api/v1",
         "disclaimer": (
             "All data in this system is synthetically generated for "

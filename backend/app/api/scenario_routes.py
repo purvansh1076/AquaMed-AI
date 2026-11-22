@@ -20,10 +20,9 @@ DISCLAIMER: All data processed is SYNTHETIC.
 from __future__ import annotations
 
 import logging
-import traceback
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.api.deps import require_expert, require_farmer_or_expert
 
@@ -43,7 +42,7 @@ from app.schemas.api_models import (
     ScenarioRunResponse,
     ScenarioType,
 )
-from app.services.scenario_service import ScenarioService
+from app.services.scenario_service import ScenarioService, prediction_to_dict
 
 logger = logging.getLogger(__name__)
 
@@ -67,48 +66,52 @@ def _get_service() -> ScenarioService:
     description="Calculates standard FAO-56 ET0 (mm/day) using Penman-Monteith physical equations.",
 )
 def compute_quick_et0(
-    temp: float,
-    humidity: float = 60.0,
-    wind_speed: float = 2.0,
-    solar_radiation: float = 18.0,
-    elevation: float = 540.0,
-    lat: float = 19.0948,
-    day_of_year: int = 180,
+    temp: float = Query(..., ge=-50.0, le=60.0, description="Air temperature (C)"),
+    humidity: float = Query(60.0, ge=0.0, le=100.0, description="Relative humidity (%)"),
+    wind_speed: float = Query(2.0, ge=0.0, le=50.0, description="Wind speed (m/s)"),
+    solar_radiation: float = Query(18.0, ge=0.0, le=40.0, description="Solar radiation (MJ/m2/day)"),
+    elevation: float = Query(540.0, ge=-500.0, le=9000.0, description="Elevation (m)"),
+    lat: float = Query(19.0948, ge=-90.0, le=90.0, description="Latitude"),
+    day_of_year: int = Query(180, ge=1, le=366, description="Day of year"),
     _identity: Dict[str, Any] = Depends(require_farmer_or_expert),
 ) -> Dict[str, Any]:
     from app.data.fao56_penman_monteith import calculate_fao56_et0
 
-    t_min = max(0.0, temp - 5.0)
-    t_max = temp + 5.0
-    et0 = calculate_fao56_et0(
-        lat_deg=lat,
-        day_of_year=day_of_year,
-        t_min=t_min,
-        t_max=t_max,
-        t_mean=temp,
-        rh_mean=humidity,
-        wind_2m=wind_speed,
-        rs_mj=solar_radiation,
-        elevation_m=elevation,
-    )
-    return {
-        "et0_mm_day": round(et0, 2),
-        "method": "FAO-56 Penman-Monteith",
-        "inputs": {
-            "temperature_c": temp,
-            "humidity_pct": humidity,
-            "wind_speed_ms": wind_speed,
-            "solar_radiation_mj": solar_radiation,
-            "elevation_m": elevation,
-            "latitude": lat,
-            "day_of_year": day_of_year,
-        },
-        "scientific_reference": "FAO Irrigation and Drainage Paper No. 56",
-        "disclaimer": "Physical reference evapotranspiration calculated via FAO-56 Penman-Monteith formulation.",
-    }
+    try:
+        t_min = max(0.0, temp - 5.0)
+        t_max = temp + 5.0
+        et0 = calculate_fao56_et0(
+            lat_deg=lat,
+            day_of_year=day_of_year,
+            t_min=t_min,
+            t_max=t_max,
+            t_mean=temp,
+            rh_mean=humidity,
+            wind_2m=wind_speed,
+            rs_mj=solar_radiation,
+            elevation_m=elevation,
+        )
+        return {
+            "et0_mm_day": round(et0, 2),
+            "method": "FAO-56 Penman-Monteith",
+            "inputs": {
+                "temperature_c": temp,
+                "humidity_pct": humidity,
+                "wind_speed_ms": wind_speed,
+                "solar_radiation_mj": solar_radiation,
+                "elevation_m": elevation,
+                "latitude": lat,
+                "day_of_year": day_of_year,
+            },
+            "scientific_reference": "FAO Irrigation and Drainage Paper No. 56",
+            "disclaimer": "Physical reference evapotranspiration calculated via FAO-56 Penman-Monteith formulation.",
+        }
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail={"error": "et0_calculation_error", "detail": str(exc), "status_code": 500},
+        )
 
-
-# ─── Primary Endpoint ─────────────────────────────────────────────────────────
 
 @router.post(
     "/scenarios/run",
@@ -198,26 +201,7 @@ def predict_single(
             farmer_data=request.farmer_data.model_dump(),
             model_name=request.model_name,
         )
-        return {
-            "farmer_id": request.farmer_data.farmer_id,
-            "predicted_water_demand_m3": round(result.predicted_water_demand_m3, 2),
-            "model_name": result.model_name,
-            "model_version": result.model_version,
-            "warning": result.warning,
-            "input_summary": result.input_summary,
-            "shadow_agronomic_estimate_m3": (
-                round(result.shadow_agronomic_estimate_m3, 2)
-                if result.shadow_agronomic_estimate_m3 is not None
-                else None
-            ),
-            "shadow_comparison": result.shadow_comparison,
-            "shadow_candidate_v3_estimate_m3": (
-                round(result.shadow_candidate_v3_estimate_m3, 2)
-                if result.shadow_candidate_v3_estimate_m3 is not None
-                else None
-            ),
-            "shadow_candidate_v3_comparison": result.shadow_candidate_v3_comparison,
-        }
+        return prediction_to_dict(result, request.farmer_data.farmer_id)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=503, detail={"error": "model_missing", "detail": str(exc), "status_code": 503})
     except Exception as exc:
@@ -243,26 +227,7 @@ def predict_batch(
             model_name=request.model_name,
         )
         predictions = [
-            {
-                "farmer_id": request.farmers[i].farmer_id,
-                "predicted_water_demand_m3": round(r.predicted_water_demand_m3, 2),
-                "model_name": r.model_name,
-                "model_version": r.model_version,
-                "warning": r.warning,
-                "input_summary": r.input_summary,
-                "shadow_agronomic_estimate_m3": (
-                    round(r.shadow_agronomic_estimate_m3, 2)
-                    if r.shadow_agronomic_estimate_m3 is not None
-                    else None
-                ),
-                "shadow_comparison": r.shadow_comparison,
-                "shadow_candidate_v3_estimate_m3": (
-                    round(r.shadow_candidate_v3_estimate_m3, 2)
-                    if r.shadow_candidate_v3_estimate_m3 is not None
-                    else None
-                ),
-                "shadow_candidate_v3_comparison": r.shadow_candidate_v3_comparison,
-            }
+            prediction_to_dict(r, request.farmers[i].farmer_id)
             for i, r in enumerate(results)
         ]
         return {"predictions": predictions, "count": len(predictions)}

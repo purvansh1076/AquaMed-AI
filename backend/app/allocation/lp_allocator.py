@@ -288,6 +288,29 @@ class WaterAllocator:
         )
         return result
 
+    def evaluate_allocation(self, allocation_m3_by_farmer: Dict[str, float]) -> AllocationResult:
+        """Validate an externally produced allocation (e.g. negotiated final)
+        against the same hard constraints without re-solving."""
+        raw = [float(allocation_m3_by_farmer.get(a.farmer_id, 0.0)) for a in self._agents]
+        w = self._weights
+        n = len(self._agents)
+        objective = 0.0
+        for agent, alloc in zip(self._agents, raw):
+            d = max(agent.predicted_water_demand, 1e-9)
+            sat = min(1.0, alloc / d) if d > 0 else 1.0
+            objective += (w.urgency * agent.urgency + w.crop_sensitivity * agent.crop_sensitivity) * sat
+            objective += w.unmet_demand * (sat - 1.0)
+            shortfall = max(0.0, agent.minimum_water_requirement - alloc)
+            objective -= w.minimum_shortfall * (shortfall / d)
+        if n > 0:
+            objective /= n
+        return self._build_result(
+            raw_allocations=raw,
+            solver_status=SolverStatus.OPTIMAL,
+            objective_value=objective,
+            method="negotiated",
+        )
+
     # ─── LP model construction ─────────────────────────────────────────────────
 
     def _solve_lp(self) -> AllocationResult:

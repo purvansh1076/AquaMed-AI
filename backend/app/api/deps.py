@@ -22,20 +22,22 @@ logger = logging.getLogger(__name__)
 
 def _extract_token(
     authorization: Optional[str] = Header(None, alias="Authorization"),
-    x_auth_token: Optional[str] = Header(None, alias="X-Auth-Token"),
-    x_guest_session: Optional[str] = Header(None, alias="X-Guest-Session"),
 ) -> Optional[str]:
-    """Extract bearer or session token from HTTP headers."""
-    if authorization:
-        parts = authorization.split()
-        if len(parts) == 2 and parts[0].lower() == "bearer":
-            return parts[1]
-        return authorization
-    if x_auth_token:
-        return x_auth_token
-    if x_guest_session:
-        return x_guest_session
-    return None
+    """Extract a Bearer token from the Authorization header only."""
+    if not authorization:
+        return None
+    parts = authorization.split()
+    if len(parts) != 2 or parts[0].lower() != "bearer" or not parts[1]:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "error": "invalid_authorization_header",
+                "detail": "Authorization header must be 'Bearer <token>'.",
+                "status_code": 401,
+            },
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return parts[1]
 
 
 def get_current_identity(

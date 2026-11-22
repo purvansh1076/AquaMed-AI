@@ -12,8 +12,11 @@ Outputs:
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any, Dict, List, Tuple
+
+from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +24,37 @@ logger = logging.getLogger(__name__)
 # Derived from actual XGBoost absolute residuals on the validation split: |y_val - y_hat|
 # Empirical 90% quantile is 45.68 m³ (providing 90.47% empirical coverage on held-out test split)
 DEFAULT_Q_HAT_M3 = 45.68
+# Normalized conformal quantile kept as a documented constant (not currently used by the served path).
+DEFAULT_Q_NORM_M3 = 25.6610
+
+
+def _load_q_hat_from_artifacts() -> float:
+    """Load the conformal quantile from evaluation_results.json.
+
+    Fails closed with a warning + documented fallback if the value is missing.
+    """
+    try:
+        model_dir = get_settings().model_dir_path
+        path = model_dir / "evaluation_results.json"
+        with path.open(encoding="utf-8") as fh:
+            data = json.load(fh)
+        conformal = data.get("conformal", {}) if isinstance(data, dict) else {}
+        value = conformal.get("q_hat_m3")
+        if value is None:
+            value = data.get("conformal_q_hat_m3") if isinstance(data, dict) else None
+        if value is None:
+            raise ValueError("conformal.q_hat_m3 missing in evaluation_results.json")
+        q_hat = float(value)
+        logger.info("Loaded conformal quantile q_hat=%.4f from %s", q_hat, path)
+        return q_hat
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "Could not load conformal quantile from evaluation_results.json (%s); "
+            "using documented fallback DEFAULT_Q_HAT_M3=%.4f",
+            exc,
+            DEFAULT_Q_HAT_M3,
+        )
+        return DEFAULT_Q_HAT_M3
 
 
 class ConformalPredictor:
@@ -84,4 +118,4 @@ class ConformalPredictor:
 
 
 # Global instance
-conformal_predictor = ConformalPredictor()
+conformal_predictor = ConformalPredictor(q_hat=_load_q_hat_from_artifacts())

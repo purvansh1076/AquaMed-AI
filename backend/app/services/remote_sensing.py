@@ -1,17 +1,24 @@
 """
 AquaMediAI — Satellite Remote Sensing & Agro-Hydrological Spatial Service
 ========================================================================
-Calculates Sentinel-2 multispectral vegetation indices (NDVI, NDWI)
+Calculates Sentinel-2-like multispectral vegetation indices (NDVI, NDWI)
 and computes dynamic satellite-adjusted crop coefficients (Kc,sat).
-Provides simulated command area topology for irrigation demonstration.
+All values are SIMULATED for demonstration; no real Copernicus data is used.
 """
 
 from __future__ import annotations
 
+import hashlib
 import logging
 from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
+
+
+def _variation(lat: float, lon: float, crop_type: str, salt: str) -> float:
+    """Deterministic small variation in [-0.02, 0.02] from inputs."""
+    h = hashlib.md5(f"{lat:.6f}|{lon:.6f}|{crop_type}|{salt}".encode("utf-8")).hexdigest()
+    return (int(h[:8], 16) / 0xFFFFFFFF) * 0.04 - 0.02
 
 
 def compute_spectral_indices(b3_green: float, b4_red: float, b8_nir: float) -> Dict[str, float]:
@@ -56,11 +63,15 @@ class RemoteSensingService:
         lon: float = 74.7480,
         crop_type: str = "sugarcane",
     ) -> Dict[str, Any]:
-        """Simulate Sentinel-2 MSI surface reflectance for registered farm coordinates."""
-        # Realistic spectral reflectance for healthy vegetative Deccan plateau parcel
-        b3_green = 0.082
-        b4_red = 0.054
-        b8_nir = 0.468
+        """Simulate Sentinel-2-like surface reflectance for registered farm coordinates."""
+        # Baseline reflectance for a healthy vegetative Deccan plateau parcel,
+        # varied deterministically by location and crop so two inputs differ.
+        base_green = 0.082
+        base_red = 0.054
+        base_nir = 0.468
+        b3_green = max(0.01, min(0.99, base_green + _variation(lat, lon, crop_type, "green")))
+        b4_red = max(0.01, min(0.99, base_red + _variation(lat, lon, crop_type, "red")))
+        b8_nir = max(0.01, min(0.99, base_nir + _variation(lat, lon, crop_type, "nir")))
 
         indices = compute_spectral_indices(b3_green, b4_red, b8_nir)
         kc_sat = estimate_satellite_kc(indices["ndvi"], crop_type)
@@ -68,20 +79,23 @@ class RemoteSensingService:
         vigor = "High Canopy Vigor" if indices["ndvi"] > 0.6 else "Moderate Vigor" if indices["ndvi"] > 0.3 else "Stressed / Fallow"
 
         return {
-            "mission": "Copernicus Sentinel-2 MSI Level-2A",
+            "data_source": "simulated",
+            "is_simulated": True,
+            "mission": "Simulated Sentinel-2-like indices (NOT real Copernicus data)",
             "coordinates": {"lat": lat, "lon": lon},
-            "acquisition_date": "2026-11-04T05:32:18Z",
-            "cloud_coverage_pct": 2.1,
+            "acquisition_date": None,
+            "acquisition_note": "No real satellite acquisition; values are simulated for demonstration.",
+            "cloud_coverage_pct": round(1.0 + abs(_variation(lat, lon, crop_type, "cloud")) * 50, 1),
             "bands": {
-                "b3_green": b3_green,
-                "b4_red": b4_red,
-                "b8_nir": b8_nir,
+                "b3_green": round(b3_green, 4),
+                "b4_red": round(b4_red, 4),
+                "b8_nir": round(b8_nir, 4),
             },
             "indices": indices,
             "vegetation_vigor_status": vigor,
             "satellite_calibrated_kc": kc_sat,
             "interpretation": (
-                f"NDVI of {indices['ndvi']} reflects {vigor.lower()} with healthy leaf biomass. "
+                f"Simulated NDVI of {indices['ndvi']} reflects {vigor.lower()} with healthy leaf biomass. "
                 f"Calibrated crop coefficient Kc is {kc_sat}."
             ),
         }

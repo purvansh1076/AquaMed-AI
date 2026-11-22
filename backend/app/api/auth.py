@@ -173,7 +173,7 @@ def expert_login(
             is_valid = True
 
     # 3. Check database if connected
-    if not is_valid and check_db_connection():
+    if not is_valid:
         try:
             from app.database import SessionLocal
             from app.models.user import User

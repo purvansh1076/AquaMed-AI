@@ -48,8 +48,8 @@ class ConformalIntervalRequest(BaseModel):
     description="Returns real-time or cached weather conditions for Ahmednagar district with agricultural parameters.",
 )
 def get_current_weather(
-    lat: float = Query(19.0948, description="Latitude"),
-    lon: float = Query(74.7480, description="Longitude"),
+    lat: float = Query(19.0948, ge=-90.0, le=90.0, description="Latitude"),
+    lon: float = Query(74.7480, ge=-180.0, le=180.0, description="Longitude"),
     _identity: Dict[str, Any] = Depends(require_farmer_or_expert),
 ) -> Dict[str, Any]:
     return weather_service.get_current_and_forecast(lat=lat, lon=lon)

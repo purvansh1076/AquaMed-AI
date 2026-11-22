@@ -148,5 +148,10 @@
       "flexible_farmer": 375
     },
     "data_disclaimer": "SYNTHETIC DATA \u2014 All records generated algorithmically using the FAO-56 ET\u2080 \u00d7 Kc \u00d7 area method. No real farmer data."
+  },
+  "conformal": {
+    "q_hat_m3": 45.68,
+    "q_norm_m3": 25.661,
+    "confidence_level": 0.9
   }
 }

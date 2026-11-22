@@ -249,6 +249,7 @@ def build_agents_from_scenario(
     predictor: "WaterDemandPredictor",  # type: ignore[name-defined]
     seed: int = 42,
     utility_weights: Optional[UtilityWeights] = None,
+    scenario_df: Optional[Any] = None,
 ) -> List[Tuple[FarmerAgent, DigitalTwin, "PredictionResult"]]:  # type: ignore[name-defined]
     """
     Build agents + twins from a generated synthetic scenario.
@@ -272,10 +273,11 @@ def build_agents_from_scenario(
     -------
     list of (FarmerAgent, DigitalTwin, PredictionResult) tuples
     """
-    from app.ml.data_generator import SyntheticDataGenerator
+    if scenario_df is None:
+        from app.ml.data_generator import SyntheticDataGenerator
 
-    gen = SyntheticDataGenerator(seed=seed)
-    scenario_df = gen.generate_scenario(scenario_type=scenario_type, n_farmers=n_farmers)
+        gen = SyntheticDataGenerator(seed=seed)
+        scenario_df = gen.generate_scenario(scenario_type=scenario_type, n_farmers=n_farmers)
     farmers_data = scenario_df.to_dict(orient="records")
 
     logger.info(

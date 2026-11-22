@@ -82,7 +82,6 @@ def get_db() -> Session:
     db: Session = SessionLocal()
     try:
         yield db
-        db.commit()
     except Exception:
         db.rollback()
         raise
@@ -103,7 +102,7 @@ def check_db_connection() -> bool:
     global _last_db_check
     import time
     now = time.monotonic()
-    if _last_db_check is not None and (now - _last_db_check[0]) < 5.0:
+    if _last_db_check is not None and (now - _last_db_check[0]) < 1.0:
         return _last_db_check[1]
 
     try:

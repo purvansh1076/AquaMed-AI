@@ -92,6 +92,30 @@ def clear_predictor_cache() -> None:
     _explainer_cache.clear()
 
 
+def prediction_to_dict(pred: Any, farmer_id: Optional[str] = None) -> Dict[str, Any]:
+    """Serialize a PredictionResult into the API response shape."""
+    pred_item = {
+        "farmer_id": farmer_id if farmer_id is not None else getattr(pred, "farmer_id", None),
+        "predicted_water_demand_m3": round(pred.predicted_water_demand_m3, 2),
+        "model_name": pred.model_name,
+        "model_version": pred.model_version,
+        "warning": pred.warning,
+        "input_summary": pred.input_summary,
+    }
+    if getattr(pred, "shadow_agronomic_estimate_m3", None) is not None:
+        pred_item["shadow_agronomic_estimate_m3"] = round(pred.shadow_agronomic_estimate_m3, 2)
+    else:
+        pred_item["shadow_agronomic_estimate_m3"] = None
+    pred_item["shadow_comparison"] = getattr(pred, "shadow_comparison", None)
+
+    if getattr(pred, "shadow_candidate_v3_estimate_m3", None) is not None:
+        pred_item["shadow_candidate_v3_estimate_m3"] = round(pred.shadow_candidate_v3_estimate_m3, 2)
+    else:
+        pred_item["shadow_candidate_v3_estimate_m3"] = None
+    pred_item["shadow_candidate_v3_comparison"] = getattr(pred, "shadow_candidate_v3_comparison", None)
+    return pred_item
+
+
 # ─── ScenarioService ─────────────────────────────────────────────────────────
 
 class ScenarioService:
@@ -109,6 +133,26 @@ class ScenarioService:
 
     def __init__(self) -> None:
         self._explanation_service = ExplanationService()
+
+    def _resolve_available_water(
+        self,
+        scenario_type: str,
+        n_farmers: int,
+        seed: int,
+        override: Optional[float] = None,
+        scenario_df: Any = None,
+    ) -> float:
+        """Resolve available water from an override or a generated scenario."""
+        if override is not None:
+            return float(override)
+        if scenario_df is None:
+            from app.ml.data_generator import SyntheticDataGenerator
+
+            gen = SyntheticDataGenerator(seed=seed)
+            scenario_df = gen.generate_scenario(
+                scenario_type=scenario_type, n_farmers=n_farmers
+            )
+        return float(scenario_df["total_available_water_m3"].iloc[0])
 
     # ─── Full pipeline ────────────────────────────────────────────────────────
 
@@ -149,11 +193,27 @@ class ScenarioService:
 
         # ── Step 1: Load predictor and generate scenario ──────────────────────
         predictor = _get_predictor(model_name)
+        # Generate the scenario once and derive available water from it.
+        from app.ml.data_generator import SyntheticDataGenerator
+
+        gen = SyntheticDataGenerator(seed=seed)
+        scenario_df = gen.generate_scenario(
+            scenario_type=scenario_type, n_farmers=n_farmers
+        )
+        available_water = self._resolve_available_water(
+            scenario_type=scenario_type,
+            n_farmers=n_farmers,
+            seed=seed,
+            override=available_water_override_m3,
+            scenario_df=scenario_df,
+        )
+
         triples = build_agents_from_scenario(
             scenario_type=scenario_type,
             n_farmers=n_farmers,
             predictor=predictor,
             seed=seed,
+            scenario_df=scenario_df,
         )
 
         if not triples:
@@ -165,45 +225,13 @@ class ScenarioService:
         agents = [t[0] for t in triples]
         predictions = [t[2] for t in triples]
 
-        # Determine available water
-        first_row = triples[0][2]
-        if available_water_override_m3 is not None:
-            available_water = available_water_override_m3
-        else:
-            # Build scenario to get the generated water supply
-            from app.ml.data_generator import SyntheticDataGenerator
-            gen = SyntheticDataGenerator(seed=seed)
-            scenario_df = gen.generate_scenario(
-                scenario_type=scenario_type, n_farmers=n_farmers
-            )
-            available_water = float(scenario_df["total_available_water_m3"].iloc[0])
-
         total_demand = sum(a.predicted_water_demand for a in agents)
 
         # ── Step 2: Build prediction response data ────────────────────────────
-        prediction_responses = []
-        for pred, agent in zip(predictions, agents):
-            pred_item = {
-                "farmer_id": agent.farmer_id,
-                "predicted_water_demand_m3": round(pred.predicted_water_demand_m3, 2),
-                "model_name": pred.model_name,
-                "model_version": pred.model_version,
-                "warning": pred.warning,
-                "input_summary": pred.input_summary,
-            }
-            if getattr(pred, "shadow_agronomic_estimate_m3", None) is not None:
-                pred_item["shadow_agronomic_estimate_m3"] = round(pred.shadow_agronomic_estimate_m3, 2)
-            else:
-                pred_item["shadow_agronomic_estimate_m3"] = None
-            pred_item["shadow_comparison"] = getattr(pred, "shadow_comparison", None)
-
-            if getattr(pred, "shadow_candidate_v3_estimate_m3", None) is not None:
-                pred_item["shadow_candidate_v3_estimate_m3"] = round(pred.shadow_candidate_v3_estimate_m3, 2)
-            else:
-                pred_item["shadow_candidate_v3_estimate_m3"] = None
-            pred_item["shadow_candidate_v3_comparison"] = getattr(pred, "shadow_candidate_v3_comparison", None)
-
-            prediction_responses.append(pred_item)
+        prediction_responses = [
+            prediction_to_dict(pred, agent.farmer_id)
+            for pred, agent in zip(predictions, agents)
+        ]
 
         # ── Step 3: Farmer agent data ─────────────────────────────────────────
         farmer_dicts = [a.as_dict() for a in agents]
@@ -235,9 +263,9 @@ class ScenarioService:
         )
         agreement = engine.run()
 
-        # Re-run allocation with best allocation from negotiation as final
-        # The final_allocation from negotiation is already LP-verified
-        final_allocation_result = initial_allocation_result  # use initial as base
+        # Validate the negotiated final allocation through the LP verifier so the
+        # reported final_allocation reflects the agreement, not the initial solve.
+        final_allocation_result = allocator.evaluate_allocation(agreement.final_allocation)
 
         # ── Step 7: Explainability (Phase 7) ──────────────────────────────────
         session = engine.session
@@ -271,7 +299,7 @@ class ScenarioService:
             prediction_explanations.append(pred_exp)
 
         final_explanation = self._explanation_service.explain_final_decision(
-            allocation_result=initial_allocation_result,
+            allocation_result=final_allocation_result,
             scenario_id=scenario_id,
             prediction_explanations=prediction_explanations,
             conflict_report=conflict_report,
@@ -289,6 +317,7 @@ class ScenarioService:
             farmer_dicts=farmer_dicts,
             conflict_report=conflict_report,
             initial_allocation_result=initial_allocation_result,
+            final_allocation_result=final_allocation_result,
             agreement=agreement,
             final_explanation=final_explanation,
             session=session,
@@ -341,23 +370,27 @@ class ScenarioService:
     ) -> Dict[str, Any]:
         """Run data generation → agents → conflict detection."""
         predictor = _get_predictor(model_name)
+        from app.ml.data_generator import SyntheticDataGenerator
+
+        gen = SyntheticDataGenerator(seed=seed)
+        scenario_df = gen.generate_scenario(
+            scenario_type=scenario_type, n_farmers=n_farmers
+        )
         triples = build_agents_from_scenario(
             scenario_type=scenario_type,
             n_farmers=n_farmers,
             predictor=predictor,
             seed=seed,
+            scenario_df=scenario_df,
         )
         agents = [t[0] for t in triples]
-
-        if available_water_override_m3 is not None:
-            available_water = available_water_override_m3
-        else:
-            from app.ml.data_generator import SyntheticDataGenerator
-            gen = SyntheticDataGenerator(seed=seed)
-            scenario_df = gen.generate_scenario(
-                scenario_type=scenario_type, n_farmers=n_farmers
-            )
-            available_water = float(scenario_df["total_available_water_m3"].iloc[0])
+        available_water = self._resolve_available_water(
+            scenario_type=scenario_type,
+            n_farmers=n_farmers,
+            seed=seed,
+            override=available_water_override_m3,
+            scenario_df=scenario_df,
+        )
 
         scenario_id = f"conflict_{uuid.uuid4().hex[:12]}"
         detector = ConflictDetector(
@@ -380,23 +413,27 @@ class ScenarioService:
     ) -> Dict[str, Any]:
         """Run data generation → agents → LP allocation."""
         predictor = _get_predictor(model_name)
+        from app.ml.data_generator import SyntheticDataGenerator
+
+        gen = SyntheticDataGenerator(seed=seed)
+        scenario_df = gen.generate_scenario(
+            scenario_type=scenario_type, n_farmers=n_farmers
+        )
         triples = build_agents_from_scenario(
             scenario_type=scenario_type,
             n_farmers=n_farmers,
             predictor=predictor,
             seed=seed,
+            scenario_df=scenario_df,
         )
         agents = [t[0] for t in triples]
-
-        if available_water_override_m3 is not None:
-            available_water = available_water_override_m3
-        else:
-            from app.ml.data_generator import SyntheticDataGenerator
-            gen = SyntheticDataGenerator(seed=seed)
-            scenario_df = gen.generate_scenario(
-                scenario_type=scenario_type, n_farmers=n_farmers
-            )
-            available_water = float(scenario_df["total_available_water_m3"].iloc[0])
+        available_water = self._resolve_available_water(
+            scenario_type=scenario_type,
+            n_farmers=n_farmers,
+            seed=seed,
+            override=available_water_override_m3,
+            scenario_df=scenario_df,
+        )
 
         scenario_id = f"alloc_{uuid.uuid4().hex[:12]}"
         allocator = WaterAllocator(
@@ -422,23 +459,27 @@ class ScenarioService:
     ) -> Dict[str, Any]:
         """Run data generation → agents → negotiation."""
         predictor = _get_predictor(model_name)
+        from app.ml.data_generator import SyntheticDataGenerator
+
+        gen = SyntheticDataGenerator(seed=seed)
+        scenario_df = gen.generate_scenario(
+            scenario_type=scenario_type, n_farmers=n_farmers
+        )
         triples = build_agents_from_scenario(
             scenario_type=scenario_type,
             n_farmers=n_farmers,
             predictor=predictor,
             seed=seed,
+            scenario_df=scenario_df,
         )
         agents = [t[0] for t in triples]
-
-        if available_water_override_m3 is not None:
-            available_water = available_water_override_m3
-        else:
-            from app.ml.data_generator import SyntheticDataGenerator
-            gen = SyntheticDataGenerator(seed=seed)
-            scenario_df = gen.generate_scenario(
-                scenario_type=scenario_type, n_farmers=n_farmers
-            )
-            available_water = float(scenario_df["total_available_water_m3"].iloc[0])
+        available_water = self._resolve_available_water(
+            scenario_type=scenario_type,
+            n_farmers=n_farmers,
+            seed=seed,
+            override=available_water_override_m3,
+            scenario_df=scenario_df,
+        )
 
         scenario_id = f"nego_{uuid.uuid4().hex[:12]}"
         config = NegotiationConfig(
@@ -521,8 +562,9 @@ class ScenarioService:
         farmer_dicts: List[Dict[str, Any]],
         conflict_report: Any,
         initial_allocation_result: Any,
-        agreement: Any,
-        final_explanation: Any,
+        final_allocation_result: Any = None,
+        agreement: Any = None,
+        final_explanation: Any = None,
         session: Optional[Any] = None,
     ) -> Dict[str, Any]:
         """Assemble the full pipeline response dict."""
@@ -548,7 +590,7 @@ class ScenarioService:
                 "rounds": [r.as_dict() for r in session.rounds] if session else [],
                 "agreement": agreement.as_dict(),
             },
-            "final_allocation": initial_allocation_result.as_dict(),
+            "final_allocation": (final_allocation_result or initial_allocation_result).as_dict(),
             "explanations": final_explanation.as_dict(),
             "final_decision": {
                 "scenario_id": scenario_id,
