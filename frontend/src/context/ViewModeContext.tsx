@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { type Language, type Translations, TRANSLATIONS } from '../i18n/translations';
 
 export type ViewMode = 'farmer' | 'expert';
@@ -55,6 +55,10 @@ export const ViewModeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
 
   const [selectedFarmerId, setSelectedFarmerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
 
   const setViewMode = (mode: ViewMode) => {
     setViewModeState(mode);

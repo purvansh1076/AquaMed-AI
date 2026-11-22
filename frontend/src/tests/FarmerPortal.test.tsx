@@ -45,12 +45,14 @@ describe('FarmerPortalPage & Phase 14 Farmer Route Flow', () => {
     const { unmount: u1 } = render(
       <MemoryRouter initialEntries={['/farmer-portal']}>
         <ScenarioProvider>
-          <App />
+          <ViewModeProvider>
+            <App />
+          </ViewModeProvider>
         </ScenarioProvider>
       </MemoryRouter>
     );
 
-    expect(screen.getByRole('heading', { name: /Enter Your Farm Details/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Enter Your Farm Details/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Calculate My Water Need/i })).toBeInTheDocument();
     u1();
 
@@ -58,12 +60,14 @@ describe('FarmerPortalPage & Phase 14 Farmer Route Flow', () => {
     const { unmount: u2 } = render(
       <MemoryRouter initialEntries={['/farmer/portal']}>
         <ScenarioProvider>
-          <App />
+          <ViewModeProvider>
+            <App />
+          </ViewModeProvider>
         </ScenarioProvider>
       </MemoryRouter>
     );
 
-    expect(screen.getByRole('heading', { name: /Enter Your Farm Details/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Enter Your Farm Details/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Calculate My Water Need/i })).toBeInTheDocument();
     u2();
   });
@@ -204,7 +208,9 @@ describe('FarmerPortalPage & Phase 14 Farmer Route Flow', () => {
     render(
       <MemoryRouter initialEntries={['/farmer']}>
         <ScenarioProvider>
-          <App />
+          <ViewModeProvider>
+            <App />
+          </ViewModeProvider>
         </ScenarioProvider>
       </MemoryRouter>
     );

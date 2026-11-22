@@ -1,8 +1,5 @@
 /**
  * Centralized API Service for AquaMediAI.
- * Connects directly to the Phase 8 FastAPI backend.
- *
- * All request/response types mirror the backend Pydantic models.
  */
 
 import type {
@@ -25,10 +22,18 @@ import type {
   ScenarioRunResponse,
 } from '../types/api';
 
-export const API_BASE_URL =
+const isDev = import.meta.env.DEV;
+
+export const API_BASE_URL: string =
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
-  'http://localhost:8000';
+  (isDev ? 'http://localhost:8000' : '');
+
+if (!API_BASE_URL && !isDev) {
+  throw new Error(
+    'VITE_API_BASE_URL is required in production. Set it in the Vercel dashboard or .env.'
+  );
+}
 
 let _authToken: string | null = null;
 try {
@@ -60,7 +65,66 @@ class ApiServiceError extends Error {
   }
 }
 
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function apiFetch(
+  path: string,
+  init: RequestInit,
+  timeoutMs: number,
+  retry: boolean
+): Promise<Response> {
+  const url = `${API_BASE_URL}${path}`;
+  const method = (init.method || 'GET').toUpperCase();
+  const isGet = method === 'GET';
+  const attempts = isGet && retry ? 2 : 1;
+  let lastError: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fetchWithTimeout(url, init, timeoutMs);
+    } catch (err) {
+      lastError = err;
+      if (i < attempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 300 * (i + 1)));
+      }
+    }
+  }
+  throw lastError;
+}
+
 async function handleResponse<T>(response: Response): Promise<T> {
+  if (response.status === 401) {
+    try {
+      localStorage.removeItem('aquamedi_auth_session');
+      localStorage.removeItem('aquamedi_auth_token');
+    } catch {
+      // storage unavailable
+    }
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
+  }
+
+  if (response.status === 204) {
+    return null as T;
+  }
+
+  const contentLength = response.headers?.get?.('content-length') ?? null;
+  if (contentLength === '0') {
+    return null as T;
+  }
+
   if (!response.ok) {
     let errorDetail = `Request failed with status ${response.status}`;
     let errorType = 'http_error';
@@ -78,20 +142,21 @@ async function handleResponse<T>(response: Response): Promise<T> {
         }
       }
     } catch {
-      // Body not JSON, fallback to statusText
       errorDetail = response.statusText || errorDetail;
     }
 
-    // Clean any accidental Python tracebacks from showing to user
     const sanitizedDetail = errorDetail.split('\n')[0].replace(/File ".*?", line \d+/g, '');
     throw new ApiServiceError(sanitizedDetail, response.status, errorType);
   }
 
-  return response.json() as Promise<T>;
+  try {
+    return (await response.json()) as T;
+  } catch {
+    return null as T;
+  }
 }
 
 export const api = {
-  /** Set active auth token for all subsequent requests. */
   setAuthToken(token: string | null): void {
     _authToken = token;
     try {
@@ -105,66 +170,57 @@ export const api = {
     }
   },
 
-  /** Get active auth token. */
   getAuthToken(): string | null {
     return _authToken;
   },
 
-  /** Create an uncredentialed guest session for farmers. */
   async createGuestSession(): Promise<GuestSessionResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/v1/auth/guest-session`, {
+    const response = await apiFetch('/api/v1/auth/guest-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    });
+    }, 30000, false);
     const data = await handleResponse<GuestSessionResponse>(response);
-    this.setAuthToken(data.access_token);
-    return data;
+    if (data) this.setAuthToken(data.access_token);
+    return data as GuestSessionResponse;
   },
 
-  /** Sign in as an Agricultural Expert. */
   async loginExpert(request: ExpertLoginRequest): Promise<ExpertLoginResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/v1/auth/expert/login`, {
+    const response = await apiFetch('/api/v1/auth/expert/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(request),
-    });
+    }, 30000, false);
     const data = await handleResponse<ExpertLoginResponse>(response);
-    this.setAuthToken(data.access_token);
-    return data;
+    if (data) this.setAuthToken(data.access_token);
+    return data as ExpertLoginResponse;
   },
 
-  /** Get profile of the current session. */
   async getIdentity(): Promise<IdentityResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+    const response = await apiFetch('/api/v1/auth/me', {
       method: 'GET',
       headers: getAuthHeaders(),
-    });
+    }, 30000, true);
     return handleResponse<IdentityResponse>(response);
   },
 
-  /** Terminate session. */
-  async logout(): Promise<{ status: string; message: string }> {
+  async logout(): Promise<{ status: string; message: string } | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
+      const response = await apiFetch('/api/v1/auth/logout', {
         method: 'POST',
         headers: getAuthHeaders(),
-      });
+      }, 30000, false);
       return await handleResponse<{ status: string; message: string }>(response);
     } finally {
       this.setAuthToken(null);
     }
   },
 
-  /**
-   * Check backend health and model pipeline availability.
-   * Calls GET /api/v1/health.
-   */
   async getHealth(): Promise<HealthResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/health`, {
+      const response = await apiFetch('/api/v1/health', {
         method: 'GET',
         headers: { Accept: 'application/json' },
-      });
+      }, 30000, true);
       return await handleResponse<HealthResponse>(response);
     } catch (err: unknown) {
       if (err instanceof ApiServiceError) throw err;
@@ -176,17 +232,13 @@ export const api = {
     }
   },
 
-  /**
-   * Run the primary full AquaMediAI mediation pipeline.
-   * Calls POST /api/v1/scenarios/run.
-   */
   async runScenario(request: ScenarioRunRequest): Promise<ScenarioRunResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/scenarios/run`, {
+      const response = await apiFetch('/api/v1/scenarios/run', {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(request),
-      });
+      }, 120000, false);
       return await handleResponse<ScenarioRunResponse>(response);
     } catch (err: unknown) {
       if (err instanceof ApiServiceError) throw err;
@@ -198,68 +250,48 @@ export const api = {
     }
   },
 
-  /**
-   * Predict water demand for a single farmer.
-   * Calls POST /api/v1/predictions.
-   */
   async predictSingle(request: PredictionRequest): Promise<PredictionResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/v1/predictions`, {
+    const response = await apiFetch('/api/v1/predictions', {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(request),
-    });
+    }, 30000, false);
     return handleResponse<PredictionResponse>(response);
   },
 
-  /**
-   * Batch predict water demand for multiple farmers.
-   * Calls POST /api/v1/predictions/batch.
-   */
   async predictBatch(request: PredictionBatchRequest): Promise<PredictionBatchResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/v1/predictions/batch`, {
+    const response = await apiFetch('/api/v1/predictions/batch', {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(request),
-    });
+    }, 30000, false);
     return handleResponse<PredictionBatchResponse>(response);
   },
 
-  /**
-   * Detect water-sharing conflicts.
-   * Calls POST /api/v1/conflicts.
-   */
   async detectConflicts(request: ConflictRequest): Promise<ScenarioConflictReportResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/v1/conflicts`, {
+    const response = await apiFetch('/api/v1/conflicts', {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(request),
-    });
+    }, 30000, false);
     return handleResponse<ScenarioConflictReportResponse>(response);
   },
 
-  /**
-   * Run LP water allocation solve.
-   * Calls POST /api/v1/allocations.
-   */
   async runAllocation(request: AllocationRequest): Promise<AllocationResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/v1/allocations`, {
+    const response = await apiFetch('/api/v1/allocations', {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(request),
-    });
+    }, 30000, false);
     return handleResponse<AllocationResponse>(response);
   },
 
-  /**
-   * Run multi-agent negotiation.
-   * Calls POST /api/v1/negotiations.
-   */
   async runNegotiation(request: NegotiationRequest): Promise<NegotiationResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/v1/negotiations`, {
+    const response = await apiFetch('/api/v1/negotiations', {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(request),
-    });
+    }, 30000, false);
     return handleResponse<NegotiationResponse>(response);
   },
 

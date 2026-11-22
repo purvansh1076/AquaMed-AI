@@ -31,7 +31,9 @@ const renderWithProviders = (initialEntries = ['/']) => {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <ScenarioProvider>
-        <App />
+        <ViewModeProvider>
+          <App />
+        </ViewModeProvider>
       </ScenarioProvider>
     </MemoryRouter>
   );
@@ -92,7 +94,7 @@ describe('Government Entry & Role Selection Flow', () => {
 
     renderWithProviders(['/']);
 
-    const farmerBtn = screen.getByRole('button', { name: /Enter Farmer Portal/i });
+    const farmerBtn = await screen.findByRole('button', { name: /Enter Farmer Portal/i });
     await user.click(farmerBtn);
 
     await waitFor(() => {
@@ -150,12 +152,12 @@ describe('Government Entry & Role Selection Flow', () => {
     renderWithProviders(['/login']);
 
     await user.type(
-      screen.getByLabelText(/Username \/ Official Email/i),
+      await screen.findByLabelText(/Username \/ Official Email/i),
       'expert@aquamedi.gov.in'
     );
-    await user.type(screen.getByPlaceholderText('••••••••'), 'CorrectHorse123!');
+    await user.type(await screen.findByPlaceholderText('••••••••'), 'CorrectHorse123!');
 
-    const submitBtn = screen.getByRole('button', { name: /Secure Login/i });
+    const submitBtn = await screen.findByRole('button', { name: /Secure Login/i });
     await user.click(submitBtn);
 
     await waitFor(() => {
@@ -168,7 +170,7 @@ describe('Government Entry & Role Selection Flow', () => {
     // Expert dashboard rendered
     await waitFor(() => {
       expect(screen.getAllByText('Dashboard Overview').length).toBeGreaterThan(0);
-    });
+    }, { timeout: 30000 });
   });
 
   // FLOW 6: Incorrect credentials are rejected
@@ -188,10 +190,10 @@ describe('Government Entry & Role Selection Flow', () => {
       </MemoryRouter>
     );
 
-    await user.type(screen.getByLabelText(/Username \/ Official Email/i), 'unknown_user');
-    await user.type(screen.getByPlaceholderText('••••••••'), 'bad_password_999');
+    await user.type(await screen.findByLabelText(/Username \/ Official Email/i), 'unknown_user');
+    await user.type(await screen.findByPlaceholderText('••••••••'), 'bad_password_999');
 
-    const submitBtn = screen.getByRole('button', { name: /Secure Login/i });
+    const submitBtn = await screen.findByRole('button', { name: /Secure Login/i });
     await user.click(submitBtn);
 
     await waitFor(() => {
@@ -207,12 +209,12 @@ describe('Government Entry & Role Selection Flow', () => {
     renderWithProviders(['/login']);
 
     await user.type(
-      screen.getByLabelText(/Username \/ Official Email/i),
+      await screen.findByLabelText(/Username \/ Official Email/i),
       'expert@aquamedi.gov.in'
     );
-    await user.type(screen.getByPlaceholderText('••••••••'), 'CorrectHorse123!');
+    await user.type(await screen.findByPlaceholderText('••••••••'), 'CorrectHorse123!');
 
-    const submitBtn = screen.getByRole('button', { name: /Secure Login/i });
+    const submitBtn = await screen.findByRole('button', { name: /Secure Login/i });
     await user.click(submitBtn);
 
     await waitFor(() => {
@@ -251,16 +253,14 @@ describe('Government Entry & Role Selection Flow', () => {
     // Expert dashboard loaded
     await waitFor(() => {
       expect(screen.getAllByText('Dashboard Overview').length).toBeGreaterThan(0);
-    });
+    }, { timeout: 30000 });
 
     // Click logout
-    const logoutBtns = screen.getAllByRole('button', { name: /Logout/i });
+    const logoutBtns = await screen.findAllByRole('button', { name: /Logout/i });
     await user.click(logoutBtns[0]);
 
     // Redirected to Login / Portal Selection
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Secure Login/i })).toBeInTheDocument();
-    });
+    await screen.findByRole('button', { name: /Secure Login/i });
 
     expect(localStorage.getItem('aquamedi_auth_session')).toBeNull();
   });
@@ -297,7 +297,7 @@ describe('Government Entry & Role Selection Flow', () => {
     // Stays on expert dashboard without redirecting to login
     await waitFor(() => {
       expect(screen.getAllByText('Dashboard Overview').length).toBeGreaterThan(0);
-    });
+    }, { timeout: 30000 });
     expect(screen.queryByRole('button', { name: /Secure Login/i })).not.toBeInTheDocument();
   });
 
@@ -320,9 +320,7 @@ describe('Government Entry & Role Selection Flow', () => {
 
     renderWithProviders(['/overview']);
 
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Secure Login/i })).toBeInTheDocument();
-    });
+    await screen.findByRole('button', { name: /Secure Login/i });
     expect(localStorage.getItem('aquamedi_auth_session')).toBeNull();
     expect(getIdentitySpy).not.toHaveBeenCalled();
   });
@@ -350,9 +348,7 @@ describe('Government Entry & Role Selection Flow', () => {
 
     renderWithProviders(['/overview']);
 
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Secure Login/i })).toBeInTheDocument();
-    });
+    await screen.findByRole('button', { name: /Secure Login/i });
     expect(screen.queryByText('Dashboard Overview')).not.toBeInTheDocument();
   });
 });

@@ -5,27 +5,29 @@
  * Farmer routes remain publicly accessible (guest session).
  */
 
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { ViewModeProvider, useViewMode } from './context/ViewModeContext';
+import { useViewMode } from './context/ViewModeContext';
 import { MainLayout } from './layouts/MainLayout';
-import { WelcomePage } from './pages/WelcomePage';
-import { ExpertLoginPage } from './pages/ExpertLoginPage';
-import { FarmerViewPage } from './pages/FarmerViewPage';
-import { FarmerPortalPage } from './pages/FarmerPortalPage';
-import { OverviewPage } from './pages/OverviewPage';
-import { ScenarioPage } from './pages/ScenarioPage';
-import { PredictionsPage } from './pages/PredictionsPage';
-import { ConflictsPage } from './pages/ConflictsPage';
-import { AllocationPage } from './pages/AllocationPage';
-import { NegotiationPage } from './pages/NegotiationPage';
-import { ExplainabilityPage } from './pages/ExplainabilityPage';
-import { AgreementPage } from './pages/AgreementPage';
-import { DebugPage } from './pages/DebugPage';
-import { ReportsPage } from './pages/ReportsPage';
-import { CropHealthPage } from './pages/CropHealthPage';
-import { IrrigationAdvisoryPage } from './pages/IrrigationAdvisoryPage';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
+
+const WelcomePage = lazy(() => import('./pages/WelcomePage').then((m) => ({ default: m.WelcomePage })));
+const ExpertLoginPage = lazy(() => import('./pages/ExpertLoginPage').then((m) => ({ default: m.ExpertLoginPage })));
+const FarmerViewPage = lazy(() => import('./pages/FarmerViewPage').then((m) => ({ default: m.FarmerViewPage })));
+const FarmerPortalPage = lazy(() => import('./pages/FarmerPortalPage').then((m) => ({ default: m.FarmerPortalPage })));
+const OverviewPage = lazy(() => import('./pages/OverviewPage').then((m) => ({ default: m.OverviewPage })));
+const ScenarioPage = lazy(() => import('./pages/ScenarioPage').then((m) => ({ default: m.ScenarioPage })));
+const PredictionsPage = lazy(() => import('./pages/PredictionsPage').then((m) => ({ default: m.PredictionsPage })));
+const ConflictsPage = lazy(() => import('./pages/ConflictsPage').then((m) => ({ default: m.ConflictsPage })));
+const AllocationPage = lazy(() => import('./pages/AllocationPage').then((m) => ({ default: m.AllocationPage })));
+const NegotiationPage = lazy(() => import('./pages/NegotiationPage').then((m) => ({ default: m.NegotiationPage })));
+const ExplainabilityPage = lazy(() => import('./pages/ExplainabilityPage').then((m) => ({ default: m.ExplainabilityPage })));
+const AgreementPage = lazy(() => import('./pages/AgreementPage').then((m) => ({ default: m.AgreementPage })));
+const DebugPage = lazy(() => import('./pages/DebugPage').then((m) => ({ default: m.DebugPage })));
+const ReportsPage = lazy(() => import('./pages/ReportsPage').then((m) => ({ default: m.ReportsPage })));
+const CropHealthPage = lazy(() => import('./pages/CropHealthPage').then((m) => ({ default: m.CropHealthPage })));
+const IrrigationAdvisoryPage = lazy(() => import('./pages/IrrigationAdvisoryPage').then((m) => ({ default: m.IrrigationAdvisoryPage })));
 
 /**
  * PrivateExpertRoute — guards expert-only routes behind authentication check.
@@ -73,7 +75,8 @@ const PrivateExpertRoute: React.FC<PrivateRouteProps> = ({ children, allowFarmer
 export const App: React.FC = () => {
   return (
     <AuthProvider>
-      <ViewModeProvider>
+      <ErrorBoundary>
+      <Suspense fallback={<div>Loading...</div>}>
         <Routes>
           {/* Government Portal Welcome & Role Selection */}
           <Route path="/" element={<WelcomePage />} />
@@ -180,17 +183,25 @@ export const App: React.FC = () => {
             <Route
               path="settings"
               element={
-                <PrivateExpertRoute>
-                  <DebugPage />
-                </PrivateExpertRoute>
+                import.meta.env.DEV ? (
+                  <PrivateExpertRoute>
+                    <DebugPage />
+                  </PrivateExpertRoute>
+                ) : (
+                  <Navigate to="/overview" replace />
+                )
               }
             />
             <Route
               path="debug"
               element={
-                <PrivateExpertRoute>
-                  <DebugPage />
-                </PrivateExpertRoute>
+                import.meta.env.DEV ? (
+                  <PrivateExpertRoute>
+                    <DebugPage />
+                  </PrivateExpertRoute>
+                ) : (
+                  <Navigate to="/overview" replace />
+                )
               }
             />
           </Route>
@@ -198,7 +209,8 @@ export const App: React.FC = () => {
           {/* Fallback to Welcome */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </ViewModeProvider>
+      </Suspense>
+    </ErrorBoundary>
     </AuthProvider>
   );
 };

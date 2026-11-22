@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { ScenarioProvider } from '../context/ScenarioContext';
+import { ViewModeProvider } from '../context/ViewModeContext';
 import { App } from '../App';
 import { api } from '../services/api';
 import { makeTestJwt, mockExpertIdentity } from './authTestUtils';
@@ -281,11 +282,14 @@ describe('AquaMediAI Frontend Application Flow', () => {
     render(
       <MemoryRouter initialEntries={['/overview']}>
         <ScenarioProvider>
-          <App />
+          <ViewModeProvider>
+            <App />
+          </ViewModeProvider>
         </ScenarioProvider>
       </MemoryRouter>
     );
 
+    await screen.findAllByText('AquaMedi AI');
     // Check project branding
     expect(screen.getAllByText('AquaMedi AI')[0]).toBeInTheDocument();
     expect(screen.getByText('Agricultural Expert Portal')).toBeInTheDocument();
@@ -303,21 +307,23 @@ describe('AquaMediAI Frontend Application Flow', () => {
     // Check live health check status
     await waitFor(() => {
       expect(screen.getByText('API Connected')).toBeInTheDocument();
-    });
+    }, { timeout: 30000 });
   });
 
   it('shows empty state initially on Overview page', async () => {
     render(
       <MemoryRouter initialEntries={['/overview']}>
         <ScenarioProvider>
-          <App />
+          <ViewModeProvider>
+            <App />
+          </ViewModeProvider>
         </ScenarioProvider>
       </MemoryRouter>
     );
 
     await waitFor(() => {
       expect(screen.getByText('API Connected')).toBeInTheDocument();
-    });
+    }, { timeout: 30000 });
 
     expect(screen.getByText('No Scenario Loaded')).toBeInTheDocument();
     expect(screen.getByText('Configure & Run Scenario')).toBeInTheDocument();
@@ -327,14 +333,16 @@ describe('AquaMediAI Frontend Application Flow', () => {
     render(
       <MemoryRouter initialEntries={['/scenario']}>
         <ScenarioProvider>
-          <App />
+          <ViewModeProvider>
+            <App />
+          </ViewModeProvider>
         </ScenarioProvider>
       </MemoryRouter>
     );
 
     await waitFor(() => {
       expect(screen.getByText('API Connected')).toBeInTheDocument();
-    });
+    }, { timeout: 30000 });
 
     expect(screen.getByText('Configure & Run Mediation Scenario')).toBeInTheDocument();
     expect(screen.getByLabelText(/Scenario Type/)).toBeInTheDocument();
@@ -350,7 +358,9 @@ describe('AquaMediAI Frontend Application Flow', () => {
     render(
       <MemoryRouter initialEntries={['/scenario']}>
         <ScenarioProvider>
-          <App />
+          <ViewModeProvider>
+            <App />
+          </ViewModeProvider>
         </ScenarioProvider>
       </MemoryRouter>
     );
@@ -372,7 +382,9 @@ describe('AquaMediAI Frontend Application Flow', () => {
     const { unmount: u1 } = render(
       <MemoryRouter initialEntries={['/predictions']}>
         <ScenarioProvider>
-          <App />
+          <ViewModeProvider>
+            <App />
+          </ViewModeProvider>
         </ScenarioProvider>
       </MemoryRouter>
     );
@@ -383,7 +395,9 @@ describe('AquaMediAI Frontend Application Flow', () => {
     const { unmount: u2 } = render(
       <MemoryRouter initialEntries={['/allocation']}>
         <ScenarioProvider>
-          <App />
+          <ViewModeProvider>
+            <App />
+          </ViewModeProvider>
         </ScenarioProvider>
       </MemoryRouter>
     );
@@ -394,7 +408,9 @@ describe('AquaMediAI Frontend Application Flow', () => {
     const { unmount: u3 } = render(
       <MemoryRouter initialEntries={['/conflicts']}>
         <ScenarioProvider>
-          <App />
+          <ViewModeProvider>
+            <App />
+          </ViewModeProvider>
         </ScenarioProvider>
       </MemoryRouter>
     );
@@ -405,7 +421,9 @@ describe('AquaMediAI Frontend Application Flow', () => {
     const { unmount: u4 } = render(
       <MemoryRouter initialEntries={['/negotiation']}>
         <ScenarioProvider>
-          <App />
+          <ViewModeProvider>
+            <App />
+          </ViewModeProvider>
         </ScenarioProvider>
       </MemoryRouter>
     );
@@ -416,7 +434,9 @@ describe('AquaMediAI Frontend Application Flow', () => {
     const { unmount: u5 } = render(
       <MemoryRouter initialEntries={['/explainability']}>
         <ScenarioProvider>
-          <App />
+          <ViewModeProvider>
+            <App />
+          </ViewModeProvider>
         </ScenarioProvider>
       </MemoryRouter>
     );
@@ -429,7 +449,9 @@ describe('AquaMediAI Frontend Application Flow', () => {
     const { unmount: u6 } = render(
       <MemoryRouter initialEntries={['/agreement']}>
         <ScenarioProvider>
-          <App />
+          <ViewModeProvider>
+            <App />
+          </ViewModeProvider>
         </ScenarioProvider>
       </MemoryRouter>
     );
@@ -440,7 +462,9 @@ describe('AquaMediAI Frontend Application Flow', () => {
     render(
       <MemoryRouter initialEntries={['/debug']}>
         <ScenarioProvider>
-          <App />
+          <ViewModeProvider>
+            <App />
+          </ViewModeProvider>
         </ScenarioProvider>
       </MemoryRouter>
     );

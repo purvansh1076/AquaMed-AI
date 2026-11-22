@@ -3428,3 +3428,5 @@ html, body {
 html, body {
   background-color: var(--gov-bg, #EEF2F7);
 }
+
+@media print { .sidebar, header, nav, button { display: none !important; } }
