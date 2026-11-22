@@ -6,7 +6,7 @@ services:
     region: oregon
     rootDir: backend
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     autoDeploy: true
     envVars:
@@ -18,5 +18,23 @@ services:
         value: "true"
       - key: PYTHONPATH
         value: .
+      - key: PYTHON_VERSION
+        value: 3.12.7
       - key: CORS_ORIGINS
-        value: https://aquamedi-ai.vercel.app,http://localhost:5173,http://localhost:3000
+        value: https://aquamedi-ai.vercel.app
+      # Dashboard-set values. Never commit real secrets to this file.
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: EXPERT_DEFAULT_PASSWORD
+        sync: false
+
+databases:
+  - name: aquamedi-ai-db
+    plan: free
+    region: oregon
+    databaseName: aquamedi
+    user: aquamedi

@@ -98,3 +98,7 @@ Desktop.ini
 *.swp
 *.sw?
 *.tmp
+
+# Scratch build/test logs
+build_err*.txt
+*_err*.txt

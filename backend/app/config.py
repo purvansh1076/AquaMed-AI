@@ -53,9 +53,8 @@ class Settings(BaseSettings):
     enable_dev_demo_credentials: bool = True
 
     # ── Database ───────────────────────────────────────────────────────────────
-    database_url: str = (
-        "postgresql+psycopg2://aquamedi:aquamedi_secret@localhost:5432/aquamedi_db"
-    )
+    # Required from the environment (or backend/.env). No embedded credentials.
+    database_url: str = ""
 
     # ── CORS ───────────────────────────────────────────────────────────────────
     cors_origins: str = "http://localhost:5173,http://localhost:3000"
@@ -151,6 +150,16 @@ class Settings(BaseSettings):
         if v not in allowed:
             raise ValueError(f"app_env must be one of {allowed}, got '{v}'")
         return v
+
+    @field_validator("database_url")
+    @classmethod
+    def validate_database_url(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError(
+                "DATABASE_URL is required. Set it in the environment or backend/.env "
+                "(for example: postgresql+psycopg2://user:password@localhost:5432/dbname)."
+            )
+        return v.strip()
 
     @field_validator("log_level")
     @classmethod
