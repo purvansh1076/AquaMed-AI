@@ -353,3 +353,10 @@ python -m pytest tests/ --tb=short
 - **Project**: AquaMediAI — Explainable AI Water-Sharing Dispute Mediation System (research prototype)
 - **Engineering Stack**: FastAPI, React 19, TypeScript, XGBoost 2.0, Google OR-Tools GLOP, TreeSHAP
 - **License**: MIT License
+
+## Documentation
+
+- [Model Card](docs/AQUAMEDI_AI_MODEL_CARD.md)
+- [Known Limitations](docs/KNOWN_LIMITATIONS.md)
+- [Dataset Provenance](docs/DATASET_PROVENANCE.md)
+
